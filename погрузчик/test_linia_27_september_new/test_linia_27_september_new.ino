@@ -85,7 +85,7 @@ bool key;
 //ЧИСТОВОЙ БЛОК ПЕРЕМЕННЫХ
 const int n_rt=200;//15-200, скорость поворота для функций типа rotate
 const int t=1500;//время поворота без датчика, 1500
-const int tcs230_delay=1000;//этого вполне достаточно
+const int tcs230_delay=1000;//1000 - достаточно даже при напряжении 11,4 вольта, (на 1500 мертвая зона 18,5 см при 11,6 вольта)
 int tcs230_counter=tcs230_delay;
 int line_true_trassa=50;//только для движения вдоль стеллажей!!!   (было 200, все работало)
 int line_true_zahvat=200;
@@ -1076,25 +1076,25 @@ if (flag==true)
     // Получение частоты на выходе
     freq_red = pulseIn(pinOut, 0);
     // вывод в последовательный порт
-    Serial.print("R= ");
-    Serial.print(freq_red);
+    /*Serial.print("R= ");
+    Serial.print(freq_red);*/
     // установить G фильтр
     digitalWrite(pinS2,1);
     digitalWrite(pinS3,1);
-    // Получение частоты на выходе
+    // Получение частоты на3 выходе
     freq_green = pulseIn(pinOut, 0);
     // вывод в последовательный порт
-    Serial.print(" G= ");
-    Serial.print(freq_green);
+    /*Serial.print(" G= ");
+    Serial.print(freq_green);*/
     // установить B фильтр
     digitalWrite(pinS2,0);
     digitalWrite(pinS3,1);
     // Получение частоты на выходе
     freq_blue = pulseIn(pinOut, 0);
   // вывод в последовательный порт
-    Serial.print(" B= ");
-    Serial.println(freq_blue);
-    if ((tcs230_counter>=tcs230_delay)&&(35<=freq_red)&&(110<=freq_green)&&(90<=freq_blue)&&(67>=freq_red)&&(145>=freq_green)&&(107>=freq_blue))//надо ли 145 в green? //((55<=freq_red)&&(120<=freq_green)&&(93<=freq_blue)&&(67>=freq_red)&&(140>=freq_green)&&(107>=freq_blue))//((18<=freq_red)&&(30<=freq_green)&&(25<=freq_blue)&&(25>=freq_red)&&(47>=freq_green)&&(40>=freq_blue))
+    /*Serial.print(" B= ");
+    Serial.println(freq_blue);*/
+    if ((tcs230_counter>=tcs230_delay)&&(35<=freq_red)&&(110<=freq_green)&&(90<=freq_blue)&&(70>=freq_red)&&(145>=freq_green)&&(110>=freq_blue))//надо ли 145 в green? //((55<=freq_red)&&(120<=freq_green)&&(93<=freq_blue)&&(67>=freq_red)&&(140>=freq_green)&&(107>=freq_blue))//((18<=freq_red)&&(30<=freq_green)&&(25<=freq_blue)&&(25>=freq_red)&&(47>=freq_green)&&(40>=freq_blue))
     {
     //red=true;
       tcs230_counter=0;
@@ -1102,10 +1102,10 @@ if (flag==true)
       analogWrite(6, 0);
       analogWrite(11, 0);
       delay(700);
-      rotate_right();
+      rotate_left();
       delay(500);
     }
-    tcs230_counter+=50;
+    //tcs230_counter+=50;
     //delay(50);
     
   
@@ -1140,7 +1140,7 @@ if (flag==true)
     if(left_sensor_4_val==color_of_line)
       true_count+=1;
 
-    if(true_count>=3)
+    if(true_count>=3) //на большом квадрате было 3
     {
       delay(1000);
       tcs230_counter+=1000;
@@ -1218,14 +1218,17 @@ if (flag==true)
   digitalWrite(9, HIGH);
   analogWrite(11, N);
 
-  if(tcs230_counter>=tcs230_delay)
+  /*if(tcs230_counter>=tcs230_delay)//&&(f_tmp==true))
+  {
     Serial.println("GO!!!");
-
+    
+  }  */ 
 
   
  }
  dist=pered.read();
 }
+  flag=false;
   analogWrite(6, 0);
   analogWrite(11, 0);
   delay(3000);
