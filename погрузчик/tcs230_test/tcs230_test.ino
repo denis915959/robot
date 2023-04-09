@@ -1,9 +1,9 @@
 // Пины подключения
-int pinS0=4;
-int pinS1=5;
-int pinS2=6;
-int pinS3=7;
-int pinOut=8;
+int pinS0=46;
+int pinS1=47;
+int pinS2=48;
+int pinS3=49;
+int pinOut=50;
 int freq=0;
 
 void setup() {
@@ -49,5 +49,5 @@ void loop() {
   Serial.println(freq);
   //delay(150);
 
-  delay(1000);
+  delay(500);
 }
