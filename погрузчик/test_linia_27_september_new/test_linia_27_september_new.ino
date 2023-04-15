@@ -456,7 +456,7 @@ distance = 100;
 
 //Serial.println(distance);
 
-while (distance>10)//(digitalRead(37)!=1)//было 7
+while (distance>9)//(digitalRead(37)!=1)//было 7
 {
   digitalWrite(9, LOW);
   digitalWrite(10, HIGH);
@@ -1108,28 +1108,168 @@ if (flag==true)
     if (/*(tcs230_counter>=tcs230_delay)&&*/(35<=freq_red)&&(100<=freq_green)&&(80<=freq_blue)&&(70>=freq_red)&&(145>=freq_green)&&(110>=freq_blue))//надо ли 145 в green? //((55<=freq_red)&&(120<=freq_green)&&(93<=freq_blue)&&(67>=freq_red)&&(140>=freq_green)&&(107>=freq_blue))//((18<=freq_red)&&(30<=freq_green)&&(25<=freq_blue)&&(25>=freq_red)&&(47>=freq_green)&&(40>=freq_blue))
     {//по идее, тут switch идет
     //red=true;
-      tcs230_counter=0; //это 4-я команда, отличаются функцией right/left
-      Serial.println("true");
-      analogWrite(6, 0);
-      analogWrite(11, 0);
-      delay(700);
-      rotate_right_stel();
-      delay(500);
-      go_back_1(); 
-      delay(500);
-      //лента берет, если ящик уже есть на вилах
-      povorot_platformy();
-      delay(500);
-      zahvat_from_floor_2();
-      delay(500);
-      go_back_2();
-      delay(500);
-      vozvrat_platformy();
-      //возврат платформы должен быть 
+      int num=2;
+      switch(num)
+      {
+      case 1:
+        tcs230_counter=0; //это 2-я команда, отличаются функцией right/left
+        //Serial.println("true");
+        analogWrite(6, 0);
+        analogWrite(11, 0);
+        delay(700);
+        rotate_left_stel();
+        delay(500);
+        go_back_1(); 
+        delay(500);
+        //лента берет, если ящик уже есть на вилах
+        povorot_platformy();
+        delay(500);
+        zahvat_from_floor_1();
+        delay(500);
+        go_back_2();
+        delay(500);
+        vozvrat_platformy();
+        //возврат платформы должен быть 
+        break;
+      case 2:
+        tcs230_counter=0; //это 2-я команда, отличаются функцией right/left
+        //Serial.println("true");
+        analogWrite(6, 0);
+        analogWrite(11, 0);
+        delay(700);
+        rotate_left_stel();
+        delay(500);
+        go_back_1(); 
+        delay(500);
+        //лента берет, если ящик уже есть на вилах
+        povorot_platformy();
+        delay(500);
+        zahvat_from_floor_2();
+        delay(500);
+        go_back_2();
+        delay(500);
+        vozvrat_platformy();
+        //возврат платформы должен быть 
+        break;
+      case 3:
+        tcs230_counter=0; //это 2-я команда, отличаются функцией right/left
+        //Serial.println("true");
+        analogWrite(6, 0);
+        analogWrite(11, 0);
+        delay(700);
+        rotate_right_stel();
+        delay(500);
+        go_back_1(); 
+        delay(500);
+        //лента берет, если ящик уже есть на вилах
+        povorot_platformy();
+        delay(500);
+        zahvat_from_floor_1();
+        delay(500);
+        go_back_2();
+        delay(500);
+        vozvrat_platformy();
+        //возврат платформы должен быть 
+        break;
+      case 4:
+        tcs230_counter=0; //это 4-я команда, отличаются функцией right/left
+        //Serial.println("true");
+        analogWrite(6, 0);
+        analogWrite(11, 0);
+        delay(700);
+        rotate_right_stel();
+        delay(500);
+        go_back_1(); 
+        delay(500);
+        //лента берет, если ящик уже есть на вилах
+        povorot_platformy();
+        delay(500);
+        zahvat_from_floor_2();
+        delay(500);
+        go_back_2();
+        delay(500);
+        vozvrat_platformy();
+        //возврат платформы должен быть 
+        break;
+      case 5:
+        rotate_right();
+        delay(500);
+        break;
+      case 6: //
+        rotate_left();
+        delay(500);
+        break;
+      case 9: //без поворота и захват ящика с первого этажа
+        tcs230_counter=0; //это 4-я команда, отличаются функцией right/left
+        //Serial.println("true");
+        /*delay(500);
+        go_back_1(); */
+        delay(500);
+        //лента берет, если ящик уже есть на вилах
+        povorot_platformy();
+        delay(500);
+        zahvat_from_floor_1();
+        delay(500);
+        go_back_2();
+        delay(500);
+        vozvrat_platformy();
+        //возврат платформы должен быть 
+        break;
+      case 10: //без поворота и захват ящика со второго этажа
+        tcs230_counter=0; 
+        //Serial.println("true");
+        /*delay(500);
+        go_back_1(); */
+        delay(500);
+        //лента берет, если ящик уже есть на вилах
+        povorot_platformy();
+        delay(500);
+        zahvat_from_floor_2();
+        delay(500);
+        go_back_2();
+        delay(500);
+        vozvrat_platformy();
+        //возврат платформы должен быть 
+        break;
+      case 11: //поворот на 180 градусов и захват ящика с первого этажа
+        tcs230_counter=0; 
+        //Serial.println("true");
+        rotate_right_180();
+        delay(500);
+        go_back_1(); 
+        delay(500);
+        //лента берет, если ящик уже есть на вилах
+        povorot_platformy();
+        delay(500);
+        zahvat_from_floor_1();
+        delay(500);
+        go_back_2();
+        delay(500);
+        vozvrat_platformy();
+        //возврат платформы должен быть 
+        break;
+
+      case 12: //поворот на 180 градусов и захват ящика со второго этажа
+        tcs230_counter=0; 
+        //Serial.println("true");
+        rotate_right_180();
+        delay(500);
+        go_back_1(); 
+        delay(500);
+        //лента берет, если ящик уже есть на вилах
+        povorot_platformy();
+        delay(500);
+        zahvat_from_floor_2();
+        delay(500);
+        go_back_2();
+        delay(500);
+        vozvrat_platformy();
+        //возврат платформы должен быть 
+        break;
+      }
 
 
-
-      rotate_right();//не относится к 4-й команде
+      rotate_left();//МЕНЯТЬ ЭТОТ ПАРАМЕТРне относится к 4-й команде
       delay(2000);
     }
     if (go_line==true)
