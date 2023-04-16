@@ -77,7 +77,7 @@ void vozvrat_platformy()//в положение ПОХОДНОЕ       //ВЕР�
 {
   go_up();
   delay(200);
-  int t1, t2, t3, t4, t5, t, gran=0;//5 
+  int t1, t2, t3, t4, t5, t, gran=7;//5 
   t=1000;
   t1=analogRead(A8);
   delay(10);
@@ -174,6 +174,7 @@ go_down_to_lenta();
 delay(1000);
 go_up();
 povorot_platformy();
+delay(1000);
 
 
 //delay(2000);
