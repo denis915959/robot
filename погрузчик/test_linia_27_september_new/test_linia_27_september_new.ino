@@ -166,7 +166,7 @@ void povorot_platformy()//поворот в БОЕВОЕ положение     
 {
   go_up();
   delay(200);
-  int t1, t2, t3, t4, t5, t, gran=935;//975
+  int t1, t2, t3, t4, t5, t, gran=930;//935
   t=0;
   t1=analogRead(A8);
   delay(10);
