@@ -1,8 +1,12 @@
 #include <Wire.h>
 int size_arr=-1;
-int status = 5;
+int status = 102; //102 - не инициализирован
 int action[100];
 int counter[100];
+int recv_i=0; //счетчик для приема данных
+int arr_count=0; //счетчик номера массива при приеме данных
+bool flag_counter=false; //для приема данных
+bool start=false; //если true, то массив принят до конца и можно начинать движение
 /*for (int i=0; i<100; i++)
 {
   action[i]=-1;
@@ -30,61 +34,68 @@ void loop() {
     delay(10000);
   }*/
 
+  if(start==true)
+  {//здесь switch, циклы массива и т.д
+    for (int j=0; j<size_arr; j++)
+    {
+      Serial.print("Action = ");
+      Serial.println(action[j]);
+      Serial.print("Counter = ");
+      Serial.println(counter[j]);
+      Serial.print("\n");
+    }
+    status=5;
+    delay(500);
+    //все счетчики приема массива должны обнулиться
+    for(int j=0; j<size_arr; j++)
+    {
+      action[j]=-1;
+      counter[j]=-1;
+    }
+    arr_count=0; //счетчик номера массива при приеме данных
+    flag_counter=false; //для приема данных
+    start=false;
+    size_arr=-1;
+    status = 102; 
+    recv_i=0;
+  }
+
  // delay(100);
 }
-/*void receiveData()
+
+void receiveData(int byteCount) //byteCount нельзя удалить, так как обработчик должен принимать один параметр типа int (так написано в документации)
 {
-  while(Wire.available())     // ведомое устройство может послать меньше, чем запрошено
-  { 
-    int n = Wire.read();     // принять байт как символ
-    Serial.print(n);          // напечатать символ
-   
-  }
-}*/
-void receiveData(int byteCount)//byteCount нельзя удалить, так как обработчик должен принимать один параметр типа int (так написано в документации)
-{
-  //int tmp[4];
-  char data[1];//Wire.read может записывать данные ТОЛЬКО в массив. не в элемент этого массива, а именно в массив
-  int i=0;
-  int arr_count=0;
-  bool flag_counter=false;
+  int recv_buf[1]; //так как обработчик вызывается при поступлении КАЖДОГО числа, то recv_buf - "посредник" для сохранения нем принятых данных
+
   while(Wire.available()) //это и есть цикл приема данных
   {
-    if(i==0)
-    {
-      data[0]=Wire.read();
-      //size_arr=data[0];
-    }
-    /*else
-    {
-      Serial.print("   else");
-      if ((arr_count<=size_arr)&&(flag_counter==false))
-      {
-        recv_buf[0]=Wire.read();
-        action[arr_count] =recv_buf[0];
-        flag_counter=true;
-      }
-      if ((arr_count<=size_arr)&&(flag_counter==true))
-      {
-        recv_buf[0]=Wire.read();
-        counter[arr_count] =recv_buf[0];
-        flag_counter=false;
-        arr_count++;
-      }
-    }*/
-    Serial.println(i);
-    i=i+1;
+    recv_buf[0]=Wire.read();  
   }
-  Serial.println(size_arr);
-  for (int i=0; i<size_arr; i++)
+  if(recv_i==0)
+    size_arr=recv_buf[0];
+  else
   {
-    Serial.print("Action = ");
-    Serial.println(action[i]);
-    Serial.print("Counter = ");
-    Serial.println(counter[i]);
-    Serial.print("\n");
+    if ((arr_count<=size_arr)&&(flag_counter==false))
+    {
+      //recv_buf[0]=Wire.read();
+      action[arr_count] =recv_buf[0];//
+      flag_counter=true;
+    }
+    else
+    {
+      //recv_buf[0]=Wire.read();
+      counter[arr_count] =recv_buf[0];
+      flag_counter=false;
+      arr_count++;
+    }
   }
   
+  if(/*recv_i*/arr_count==(size_arr-1))
+  {
+    start=true;
+  }
+  //Serial.print(size_arr);
+  recv_i++;
 }
 
 void sendData()
