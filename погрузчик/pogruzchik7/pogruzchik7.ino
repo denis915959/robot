@@ -1,5 +1,4 @@
-//рабочая версия!!!!
-
+#include <Wire.h>
 #include <Servo.h> // подключаем библиотеку для работы с сервоприводом
 #include <Ultrasonic.h>
 Ultrasonic pered(31, 30);
@@ -8,7 +7,14 @@ Ultrasonic nazad(41, 40);
 Ultrasonic ultrasonic(39, 38);
 int distance1;
 
-
+int size_arr=-1;
+int status = 102; //102 - не инициализирован
+int action[100];
+int counter[100];
+int recv_i=0; //счетчик для приема данных
+int arr_count=0; //счетчик номера массива при приеме данных
+bool flag_counter=false; //для приема данных
+bool start=false; //если true, то массив принят до конца и можно начинать движение
 
 
 
@@ -36,7 +42,6 @@ int left_sensor_szadi_val;//20 пин
 int right_sensor_szadi_val;//19 пин
 
 int n_stell=130;
-//int flag=0;
 int t_start=1500;//задержка при повороте, на 100% аккуме 1200 достаточно
 int t_radio=50;
 int f=1, c=1, val;
@@ -45,7 +50,7 @@ int n1=140; //на 100% аккуме 120
 //int datchik=1;
 int d=1000;//длительность остановка для отправки сигнала,1000
 int number_povtor=8;//было 20
-bool flag=false;
+//bool flag=false;
 bool go_line=true;
 bool radio_rotate=false;
 bool color_of_line=false;//0-белый, 1 - черный
@@ -56,7 +61,6 @@ int lin_speed_1=40;  //ЭТАЛОН было 20, затем 40, но не оче
 int line_true_1=5;// было 200, на 10 уже хорошо работает
 
 int rt_2=170;//170
-
 
 
 
@@ -91,6 +95,7 @@ int line_true_trassa=50;//только для движения вдоль сте
 int line_true_zahvat=200;
 int tmp_nizhny_floor=2800;//для нижнего этажа, должно быть чуть выше, чем значение tmp из-за особенности регулировки концевиков
 int tmp_verhny_floor=5000;//для верхнего этажа
+bool red=false;
 
 // Пины подключения датчика цвета
 int pinS0=46;
@@ -106,11 +111,11 @@ int pinOut=50;
 
 
 
-void setup() {
-    //mySwitch.enableTransmit(4);
-  Serial.begin(9600);
 
 
+//int SLAVE_ADDRESS=0x20;//04, задается здесь!
+void setup()
+{
   pinMode(pinS0, 1);
   pinMode(pinS1, 1);
   pinMode(pinS2, 1);
@@ -122,41 +127,44 @@ void setup() {
   digitalWrite(pinS1,0);
 
   
-pinMode(22, INPUT);//правый датчик
-pinMode(23, INPUT);//левый датчик
-pinMode(24, INPUT);//правый датчик 2, возможно убрать
-pinMode(25, INPUT);//возможно убрать
-pinMode(26, INPUT);
-pinMode(27, INPUT);
-pinMode(28, INPUT);
-pinMode(29, INPUT);
+  pinMode(22, INPUT);//правый датчик
+  pinMode(23, INPUT);//левый датчик
+  pinMode(24, INPUT);//правый датчик 2, возможно убрать
+  pinMode(25, INPUT);//возможно убрать
+  pinMode(26, INPUT);
+  pinMode(27, INPUT);
+  pinMode(28, INPUT);
+  pinMode(29, INPUT);
 
-pinMode(42, INPUT);//правый датчик сзади
-pinMode(43, INPUT);//левый датчик сзади
-pinMode(44, INPUT);
-pinMode(45, INPUT);
+  pinMode(42, INPUT);//правый датчик сзади
+  pinMode(43, INPUT);//левый датчик сзади
+  pinMode(44, INPUT);
+  pinMode(45, INPUT);
 
-pinMode(6, OUTPUT);//правый
-pinMode(7, OUTPUT);//правый минус
-pinMode(8, OUTPUT);//правый плюс
-pinMode(9, OUTPUT);//левый минус
-pinMode(10, OUTPUT);//левый плюс
-pinMode(11, OUTPUT);//левый
-pinMode(37, INPUT);//кнопка стартовая
+  pinMode(6, OUTPUT);//правый
+  pinMode(7, OUTPUT);//правый минус
+  pinMode(8, OUTPUT);//правый плюс
+  pinMode(9, OUTPUT);//левый минус
+  pinMode(10, OUTPUT);//левый плюс
+  pinMode(11, OUTPUT);//левый
+  pinMode(37, INPUT);//кнопка стартовая
 
-pinMode(32, INPUT);//верхний концевик
-pinMode(33, INPUT);//нижний концевик
-pinMode(2, OUTPUT);//мотор разворот платформы
-pinMode(3, OUTPUT);//мотор разворот платформы
-pinMode(4, OUTPUT);//лента
-pinMode(5, OUTPUT);//лента
-pinMode(12, OUTPUT);//платформа вверх/вниз
-pinMode(13, OUTPUT);//платформа вверх/вниз
-pinMode(A8, INPUT);//потенциометр
-pinMode(36, INPUT);//концевик лента
-
+  pinMode(32, INPUT);//верхний концевик
+  pinMode(33, INPUT);//нижний концевик
+  pinMode(2, OUTPUT);//мотор разворот платформы
+  pinMode(3, OUTPUT);//мотор разворот платформы
+  pinMode(4, OUTPUT);//лента
+  pinMode(5, OUTPUT);//лента
+  pinMode(12, OUTPUT);//платформа вверх/вниз
+  pinMode(13, OUTPUT);//платформа вверх/вниз
+  pinMode(A8, INPUT);//потенциометр
+  pinMode(36, INPUT);//концевик лента
+  Serial.begin(9600);   // настроить последовательный порт для вывода
+  Wire.begin(0x20/*SLAVE_ADDRESS*/);         // подключиться к шине i2c (адрес для мастера не обязателен)
+  Wire.onReceive(receiveData);
+  Wire.onRequest(sendData);
+  
 }
-
 
 
 
@@ -1050,71 +1058,202 @@ void zahvat_from_floor_2()//захват со второго яруса
 
 
 
-
-
 void loop() {
-  // put your main code here, to run repeatedly:
+  if(start==true)//пришел массив с rpi
+  {//здесь switch, циклы массива и т.д
+    tcs230_counter=tcs230_delay;//попробовать убрать
+    int dist=100;
+    for (int i=0; i<size_arr; i++)
+    {
+      if(status!=102) 
+          break;
+      if(dist<=7)
+        break;
+      for(int j=0; j<counter[i]; j++)
+      {
+        if(status!=102)
+          break;
+        if(dist<=7)
+          break;
 
+        digitalWrite(8, LOW);
+        digitalWrite(7, LOW);
+        digitalWrite(9, LOW);
+        digitalWrite(10, LOW);
+        delay(5);
+        while(1)
+        {
+          //Serial.println(pered.read());
+          dist=pered.read();
+          while (dist>7) 
+          {
 
-
-if (digitalRead(37)==1)//было 32
-{
-   flag=true;
-   //povorot_platformy();
-}
-digitalWrite(8, LOW);
-digitalWrite(7, LOW);
-digitalWrite(9, LOW);
-digitalWrite(10, LOW);
-delay(5);
-
-int dist=0;
-if (flag==true)
-{
-
-
-  //Serial.println(pered.read());
-  dist=pered.read();
-  while (dist>7) 
-  {
-
-    int freq_red=0;
-    int freq_green=0;
-    int freq_blue=0;
-    //bool red=false;
+            int freq_red=0;
+            int freq_green=0;
+            int freq_blue=0;
+            //bool red=false;
   
-    digitalWrite(pinS2,0);
-    digitalWrite(pinS3,0);
-    // Получение частоты на выходе
-    freq_red = pulseIn(pinOut, 0);
-    // вывод в последовательный порт
-    /*Serial.print("R= ");
-    Serial.print(freq_red);*/
-    // установить G фильтр
-    digitalWrite(pinS2,1);
-    digitalWrite(pinS3,1);
-    // Получение частоты на3 выходе
-    freq_green = pulseIn(pinOut, 0);
-    // вывод в последовательный порт
-    /*Serial.print(" G= ");
-    Serial.print(freq_green);*/
-    // установить B фильтр
-    digitalWrite(pinS2,0);
-    digitalWrite(pinS3,1);
-    // Получение частоты на выходе
-    freq_blue = pulseIn(pinOut, 0);
-    // вывод в последовательный порт
-    /*Serial.print(" B= ");
-    Serial.println(freq_blue);*/
-    if ((tcs230_counter>=tcs230_delay)&&(35<=freq_red)&&(100<=freq_green)&&(80<=freq_blue)&&(70>=freq_red)&&(145>=freq_green)&&(110>=freq_blue))//надо ли 145 в green? //((55<=freq_red)&&(120<=freq_green)&&(93<=freq_blue)&&(67>=freq_red)&&(140>=freq_green)&&(107>=freq_blue))//((18<=freq_red)&&(30<=freq_green)&&(25<=freq_blue)&&(25>=freq_red)&&(47>=freq_green)&&(40>=freq_blue))
-    {//по идее, тут switch идет
-    //red=true;
-      int num=2;
-      switch(num)
+            digitalWrite(pinS2,0);
+            digitalWrite(pinS3,0);
+            // Получение частоты на выходе
+            freq_red = pulseIn(pinOut, 0);
+            // вывод в последовательный порт
+            /*Serial.print("R= ");
+            Serial.print(freq_red);*/
+            // установить G фильтр
+            digitalWrite(pinS2,1);
+            digitalWrite(pinS3,1);
+            // Получение частоты на3 выходе
+            freq_green = pulseIn(pinOut, 0);
+            // вывод в последовательный порт
+            /*Serial.print(" G= ");
+            Serial.print(freq_green);*/
+            // установить B фильтр
+            digitalWrite(pinS2,0);
+            digitalWrite(pinS3,1);
+            // Получение частоты на выходе
+            freq_blue = pulseIn(pinOut, 0);
+            // вывод в последовательный порт
+            /*Serial.print(" B= ");
+            Serial.println(freq_blue);*/
+            if ((tcs230_counter>=tcs230_delay)&&(35<=freq_red)&&(100<=freq_green)&&(80<=freq_blue)&&(70>=freq_red)&&(145>=freq_green)&&(110>=freq_blue))//надо ли 145 в green? //((55<=freq_red)&&(120<=freq_green)&&(93<=freq_blue)&&(67>=freq_red)&&(140>=freq_green)&&(107>=freq_blue))//((18<=freq_red)&&(30<=freq_green)&&(25<=freq_blue)&&(25>=freq_red)&&(47>=freq_green)&&(40>=freq_blue))
+            {//по идее, тут switch идет
+              red=true;
+            }
+            if(red==true)//здесь ли??? 
+            {
+              break;
+            }
+            if (go_line==true)
+            {
+              int right_sensor_val = digitalRead(22);
+              int left_sensor_val = digitalRead(23);
+              int right_sensor_2_val = digitalRead(24);
+              int left_sensor_2_val = digitalRead(25);
+              int right_sensor_3_val = digitalRead(26);
+              int left_sensor_3_val = digitalRead(27);
+              int right_sensor_4_val = digitalRead(28);
+              int left_sensor_4_val = digitalRead(29);
+
+              int true_count=0;
+              if(right_sensor_val==color_of_line)
+                true_count+=1;
+              if(right_sensor_2_val==color_of_line)
+                true_count+=1;
+              if(right_sensor_3_val==color_of_line)
+                true_count+=1;
+              if(right_sensor_4_val==color_of_line)
+                true_count+=1;
+
+              if(left_sensor_val==color_of_line)
+                true_count+=1;
+              if(left_sensor_2_val==color_of_line)
+                true_count+=1;
+              if(left_sensor_3_val==color_of_line)
+                true_count+=1;
+              if(left_sensor_4_val==color_of_line)
+                true_count+=1;
+
+              if(true_count>=3) //на большом квадрате было 3
+              {
+                delay(tcs230_delay);
+                tcs230_counter+=1000;
+              }
+
+              if (left_sensor_val==color_of_line) 
+              {
+                N=150;
+                analogWrite(6, lin_speed);
+                analogWrite(11, N);
+                delay(line_true_trassa);  
+                tcs230_counter+=line_true_trassa;
+              }
+              N=90;//100
+              digitalWrite(8, HIGH);
+              digitalWrite(7, LOW);
+              analogWrite(6, N);//желательно скорость 200 
+              if (right_sensor_val==color_of_line)
+              {
+                N=150;
+                analogWrite(6, N);
+                analogWrite(11, lin_speed);
+                delay(line_true_trassa);
+                tcs230_counter+=line_true_trassa;
+              }
+              N=90;//100
+              digitalWrite(10, LOW);
+              digitalWrite(9, HIGH);
+              analogWrite(11, N);
+              if ((left_sensor_2_val==color_of_line)||(left_sensor_3_val==color_of_line)||(left_sensor_4_val==color_of_line)/*&&(datchik==1)*/) 
+              {
+                while (digitalRead(22)!=color_of_line)
+                {
+                  digitalWrite(7, HIGH);
+                  digitalWrite(8, LOW);
+                  analogWrite(6, n);
+                  digitalWrite(9, HIGH);
+                  digitalWrite(10, LOW);
+                  analogWrite(11, n);
+                  delay(50);//50
+                  tcs230_counter+=50;
+                } 
+              }
+              digitalWrite(8, HIGH);
+              digitalWrite(7, LOW);
+              analogWrite(6, N);
+              digitalWrite(10, LOW);
+              digitalWrite(9, HIGH);
+              analogWrite(11, N);
+
+              if ((right_sensor_2_val==color_of_line)||(right_sensor_3_val==color_of_line)||(right_sensor_4_val==color_of_line)/*&&(datchik==1)*/)
+              {
+                while (digitalRead(23)!=color_of_line)
+                {
+                  digitalWrite(8, HIGH);
+                  digitalWrite(7, LOW);
+                  analogWrite(6, n);
+                  digitalWrite(10, HIGH);
+                  digitalWrite(9, LOW);
+                  analogWrite(11, n);
+                  delay(50);
+                  tcs230_counter+=50;
+                } 
+              }
+              digitalWrite(8, HIGH);
+              digitalWrite(7, LOW);
+              analogWrite(6, N);
+              digitalWrite(10, LOW);
+              digitalWrite(9, HIGH);
+              analogWrite(11, N);
+
+              /*if(tcs230_counter>=tcs230_delay)//&&(f_tmp==true))
+              {
+                Serial.println("GO!!!");
+              }  */ 
+            }
+
+            dist=pered.read();
+          }
+          if(dist<=7)
+          {
+            status=i;
+            Serial.print("status ");
+            Serial.println(status);
+            break;
+          }
+          if(red==true)//здесь ли??? 
+          {
+            break;
+          }
+          analogWrite(6, 0);
+          analogWrite(11, 0);
+          delay(500);
+        }
+        tcs230_counter=0;
+      }
+      switch(action[i]) //посмотреть, используется ли команда 0?
       {
       case 1:
-        tcs230_counter=0; //это 2-я команда, отличаются функцией right/left
-        //Serial.println("true");
         analogWrite(6, 0);
         analogWrite(11, 0);
         delay(700);
@@ -1133,8 +1272,6 @@ if (flag==true)
         //возврат платформы должен быть 
         break;
       case 2:
-        tcs230_counter=0; //это 2-я команда, отличаются функцией right/left
-        //Serial.println("true");
         analogWrite(6, 0);
         analogWrite(11, 0);
         delay(700);
@@ -1153,8 +1290,6 @@ if (flag==true)
         //возврат платформы должен быть 
         break;
       case 3:
-        tcs230_counter=0; //это 2-я команда, отличаются функцией right/left
-        //Serial.println("true");
         analogWrite(6, 0);
         analogWrite(11, 0);
         delay(700);
@@ -1173,8 +1308,6 @@ if (flag==true)
         //возврат платформы должен быть 
         break;
       case 4:
-        tcs230_counter=0; //это 4-я команда, отличаются функцией right/left
-        //Serial.println("true");
         analogWrite(6, 0);
         analogWrite(11, 0);
         delay(700);
@@ -1201,8 +1334,6 @@ if (flag==true)
         delay(500);
         break;
       case 9: //без поворота и захват ящика с первого этажа
-        tcs230_counter=0; //это 4-я команда, отличаются функцией right/left
-        //Serial.println("true");
         /*delay(500);
         go_back_1(); */
         delay(500);
@@ -1217,8 +1348,6 @@ if (flag==true)
         //возврат платформы должен быть 
         break;
       case 10: //без поворота и захват ящика со второго этажа
-        tcs230_counter=0; 
-        //Serial.println("true");
         /*delay(500);
         go_back_1(); */
         delay(500);
@@ -1233,8 +1362,6 @@ if (flag==true)
         //возврат платформы должен быть 
         break;
       case 11: //поворот на 180 градусов и захват ящика с первого этажа
-        tcs230_counter=0; 
-        //Serial.println("true");
         rotate_right_180();
         delay(500);
         go_back_1(); 
@@ -1251,8 +1378,6 @@ if (flag==true)
         break;
 
       case 12: //поворот на 180 градусов и захват ящика со второго этажа
-        tcs230_counter=0; 
-        //Serial.println("true");
         rotate_right_180();
         delay(500);
         go_back_1(); 
@@ -1268,137 +1393,66 @@ if (flag==true)
         //возврат платформы должен быть 
         break;
       }
-
-
-      rotate_left();//МЕНЯТЬ ЭТОТ ПАРАМЕТРне относится к 4-й команде
-      delay(2000);
+      //rotate_left();//МЕНЯТЬ ЭТОТ ПАРАМЕТРне относится к 4-й команде
+      //delay(2000);
     }
-    if (go_line==true)
+    Serial.println("end for");
+    delay(500);
+    //все счетчики приема массива должны обнулиться
+    for(int j=0; j<size_arr; j++)
     {
-    
-    //tcs230_counter+=50;
-    //delay(50);
-  
-      int right_sensor_val = digitalRead(22);
-      int left_sensor_val = digitalRead(23);
-      int right_sensor_2_val = digitalRead(24);
-      int left_sensor_2_val = digitalRead(25);
-      int right_sensor_3_val = digitalRead(26);
-      int left_sensor_3_val = digitalRead(27);
-      int right_sensor_4_val = digitalRead(28);
-      int left_sensor_4_val = digitalRead(29);
-
-      int true_count=0;
-      if(right_sensor_val==color_of_line)
-        true_count+=1;
-      if(right_sensor_2_val==color_of_line)
-         true_count+=1;
-      if(right_sensor_3_val==color_of_line)
-        true_count+=1;
-      if(right_sensor_4_val==color_of_line)
-        true_count+=1;
-
-    if(left_sensor_val==color_of_line)
-      true_count+=1;
-    if(left_sensor_2_val==color_of_line)
-      true_count+=1;
-    if(left_sensor_3_val==color_of_line)
-      true_count+=1;
-    if(left_sensor_4_val==color_of_line)
-      true_count+=1;
-
-    if(true_count>=3) //на большом квадрате было 3
-    {
-      delay(1000);
-      tcs230_counter+=1000;
+      action[j]=-1;
+      counter[j]=-1;
     }
-
-
-
-
-
-
-  if (left_sensor_val==color_of_line) 
-  {
-    N=150;
-    analogWrite(6, lin_speed);
-    analogWrite(11, N);
-    delay(line_true_trassa);  
-    tcs230_counter+=line_true_trassa;
+    arr_count=0; //счетчик номера массива при приеме данных
+    flag_counter=false; //для приема данных
+    start=false;
+    size_arr=-1;
+    status = 102; 
+    recv_i=0;
   }
-  N=90;//100
-  digitalWrite(8, HIGH);
-  digitalWrite(7, LOW);
-  analogWrite(6, N);//желательно скорость 200 
-  if (right_sensor_val==color_of_line)
-  {
- 
-    N=150;
-    analogWrite(6, N);
-    analogWrite(11, lin_speed);
-    delay(line_true_trassa);
-    tcs230_counter+=line_true_trassa;
-  }
-  N=90;//100
-  digitalWrite(10, LOW);
-  digitalWrite(9, HIGH);
-  analogWrite(11, N);
-  if ((left_sensor_2_val==color_of_line)||(left_sensor_3_val==color_of_line)||(left_sensor_4_val==color_of_line)/*&&(datchik==1)*/) 
-  {
-     while (digitalRead(22)!=color_of_line)
-     {
-        digitalWrite(7, HIGH);
-        digitalWrite(8, LOW);
-        analogWrite(6, n);
-        digitalWrite(9, HIGH);
-        digitalWrite(10, LOW);
-        analogWrite(11, n);
-        delay(50);//50
-        tcs230_counter+=50;
-     } 
-  }
-  digitalWrite(8, HIGH);
-  digitalWrite(7, LOW);
-  analogWrite(6, N);
-  digitalWrite(10, LOW);
-  digitalWrite(9, HIGH);
-  analogWrite(11, N);
+}
 
-  if ((right_sensor_2_val==color_of_line)||(right_sensor_3_val==color_of_line)||(right_sensor_4_val==color_of_line)/*&&(datchik==1)*/)
+
+
+
+
+void receiveData(int byteCount) //byteCount нельзя удалить, так как обработчик должен принимать один параметр типа int (так написано в документации)
+{
+  int recv_buf[1]; //так как обработчик вызывается при поступлении КАЖДОГО числа, то recv_buf - "посредник" для сохранения нем принятых данных
+
+  while(Wire.available()) //это и есть цикл приема данных
   {
-    while (digitalRead(23)!=color_of_line)
+    recv_buf[0]=Wire.read();  
+  }
+  if(recv_i==0)
+    size_arr=recv_buf[0];
+  else
+  {
+    if ((arr_count<=size_arr)&&(flag_counter==false))
     {
-      digitalWrite(8, HIGH);
-      digitalWrite(7, LOW);
-      analogWrite(6, n);
-      digitalWrite(10, HIGH);
-      digitalWrite(9, LOW);
-      analogWrite(11, n);
-      delay(50);
-      tcs230_counter+=50;
-    } 
+      //recv_buf[0]=Wire.read();
+      action[arr_count] =recv_buf[0];//
+      flag_counter=true;
+    }
+    else
+    {
+      //recv_buf[0]=Wire.read();
+      counter[arr_count] =recv_buf[0];
+      flag_counter=false;
+      arr_count++;
+    }
   }
-  digitalWrite(8, HIGH);
-  digitalWrite(7, LOW);
-  analogWrite(6, N);
-  digitalWrite(10, LOW);
-  digitalWrite(9, HIGH);
-  analogWrite(11, N);
-
-  /*if(tcs230_counter>=tcs230_delay)//&&(f_tmp==true))
-  {
-    Serial.println("GO!!!");
-    
-  }  */ 
-
   
- }
- dist=pered.read();
+  if(/*recv_i*/arr_count==(size_arr-1))
+  {
+    start=true;
+  }
+  //Serial.print(size_arr);
+  recv_i++;
 }
-  flag=false;
-  analogWrite(6, 0);
-  analogWrite(11, 0);
-  delay(3000);
-}
-//delay(3000);
+
+void sendData()
+{
+  Wire.write(status);
 }
