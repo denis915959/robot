@@ -8,7 +8,7 @@ Ultrasonic ultrasonic(39, 38);
 int distance1;
 
 int size_arr=-1;
-int status = 102; //102 - не инициализирован
+int status = 102; //102 - не инициализирован, если все ок - то номер последнего элемента массива, иначе номер элемента массива команд, на котром препятствие
 int action[100];
 int counter[100];
 int recv_i=0; //счетчик для приема данных
@@ -94,7 +94,7 @@ int tcs230_counter=tcs230_delay;
 int line_true_trassa=50;//только для движения вдоль стеллажей!!!   (было 200, все работало)
 int line_true_zahvat=200;
 int tmp_nizhny_floor=2800;//для нижнего этажа, должно быть чуть выше, чем значение tmp из-за особенности регулировки концевиков
-int tmp_verhny_floor=5000;//для верхнего этажа
+int tmp_verhny_floor=5500;//для верхнего этажа, было 5000
 bool red=false;
 
 // Пины подключения датчика цвета
@@ -1061,21 +1061,40 @@ void zahvat_from_floor_2()//захват со второго яруса
 void loop() {
   if(start==true)//пришел массив с rpi
   {//здесь switch, циклы массива и т.д
+    vozvrat_platformy();
     tcs230_counter=tcs230_delay;//попробовать убрать
     int dist=100;
+    for (int j=0; j<size_arr; j++)
+    {
+      Serial.print("Action = ");
+      Serial.println(action[j]);
+      Serial.print("Counter = ");
+      Serial.println(counter[j]);
+      Serial.print("\n");
+    }
     for (int i=0; i<size_arr; i++)
     {
-      if(status!=102) 
-          break;
+      Serial.print("act = ");
+      Serial.println(action[i]);
+      if(status<(size_arr-1))//убрать?
+      {
+        Serial.println("barrier");
+        break;
+      }
       if(dist<=7)
         break;
       for(int j=0; j<counter[i]; j++)
       {
-        if(status!=102)
+        /*Serial.print("j = ");
+        Serial.println(j);*/
+        /*if(status!=102)//убрать?
+        {
+          
+          Serial.println("barrier");
           break;
+        }*/
         if(dist<=7)
           break;
-
         digitalWrite(8, LOW);
         digitalWrite(7, LOW);
         digitalWrite(9, LOW);
@@ -1119,6 +1138,8 @@ void loop() {
             if ((tcs230_counter>=tcs230_delay)&&(35<=freq_red)&&(100<=freq_green)&&(80<=freq_blue)&&(70>=freq_red)&&(145>=freq_green)&&(110>=freq_blue))//надо ли 145 в green? //((55<=freq_red)&&(120<=freq_green)&&(93<=freq_blue)&&(67>=freq_red)&&(140>=freq_green)&&(107>=freq_blue))//((18<=freq_red)&&(30<=freq_green)&&(25<=freq_blue)&&(25>=freq_red)&&(47>=freq_green)&&(40>=freq_blue))
             {//по идее, тут switch идет
               red=true;
+              Serial.println("red");
+              tcs230_counter=0;
             }
             if(red==true)//здесь ли??? 
             {
@@ -1157,7 +1178,7 @@ void loop() {
               if(true_count>=3) //на большом квадрате было 3
               {
                 delay(tcs230_delay);
-                tcs230_counter+=1000;
+                tcs230_counter+=tcs230_delay;
               }
 
               if (left_sensor_val==color_of_line) 
@@ -1234,10 +1255,11 @@ void loop() {
 
             dist=pered.read();
           }
-          if(dist<=7)
+          
+          if(dist<=7)//оставить
           {
             status=i;
-            Serial.print("status ");
+            Serial.print("ststus");
             Serial.println(status);
             break;
           }
@@ -1247,12 +1269,36 @@ void loop() {
           }
           analogWrite(6, 0);
           analogWrite(11, 0);
-          delay(500);
+          //delay(500);
         }
-        tcs230_counter=0;
+        //tcs230_counter=0;
+        red=false;
+      }
+      //Serial.println("end J");
+      red=false;
+      tcs230_counter=0;
+      if(status<(size_arr-1))//оставить
+      {
+        Serial.println("barrier");
+        analogWrite(6, 0);
+        analogWrite(11, 0);
+        break;
+
       }
       switch(action[i]) //посмотреть, используется ли команда 0?
       {
+      case 0:
+        if(status<(size_arr-1))
+        {
+          Serial.println("barrier");
+          analogWrite(6, 0);
+          analogWrite(11, 0);
+          break;
+        }
+        analogWrite(6, 0);
+        analogWrite(11, 0);
+        delay(10);
+        break;
       case 1:
         analogWrite(6, 0);
         analogWrite(11, 0);
@@ -1393,6 +1439,11 @@ void loop() {
         //возврат платформы должен быть 
         break;
       }
+      if(status<(size_arr-1))
+      {
+        Serial.println("barrier");
+        break;
+      }
       //rotate_left();//МЕНЯТЬ ЭТОТ ПАРАМЕТРне относится к 4-й команде
       //delay(2000);
     }
@@ -1410,6 +1461,7 @@ void loop() {
     size_arr=-1;
     status = 102; 
     recv_i=0;
+    Serial.println("end!");
   }
 }
 
