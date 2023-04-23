@@ -94,8 +94,11 @@ int tcs230_counter=tcs230_delay;
 int line_true_trassa=50;//только для движения вдоль стеллажей!!!   (было 200, все работало)
 int line_true_zahvat=200;
 int tmp_nizhny_floor=2800;//для нижнего этажа, должно быть чуть выше, чем значение tmp из-за особенности регулировки концевиков
-int tmp_verhny_floor=5500;//для верхнего этажа, было 5000
+int tmp_verhny_floor=5000;//для верхнего этажа, было 5000
 bool red=false;
+int kacheli_delay=300;  //когда возникает ситуаця, что линию видят только второй контур, возникают "качели". этот таймер преодолевает это расстояние
+int delay_red=200;  //больше нельзя, т.к у задних датчиков возможна ситуация, что на линии сраьотают два одновременн (редко, но бывает). поэтому задержка небольшая должна быть
+
 
 // Пины подключения датчика цвета
 int pinS0=46;
@@ -159,7 +162,7 @@ void setup()
   pinMode(13, OUTPUT);//платформа вверх/вниз
   pinMode(A8, INPUT);//потенциометр
   pinMode(36, INPUT);//концевик лента
-  Serial.begin(9600);   // настроить последовательный порт для вывода
+  ////Serial.begin(9600);   // настроить последовательный порт для вывода
   Wire.begin(0x20/*SLAVE_ADDRESS*/);         // подключиться к шине i2c (адрес для мастера не обязателен)
   Wire.onReceive(receiveData);
   Wire.onRequest(sendData);
@@ -174,7 +177,7 @@ void povorot_platformy()//поворот в БОЕВОЕ положение     
 {
   go_up();
   delay(200);
-  int t1, t2, t3, t4, t5, t, gran=930;//935
+  int t1, t2, t3, t4, t5, t, gran=985;//965 с проводом
   t=0;
   t1=analogRead(A8);
   delay(10);
@@ -195,8 +198,8 @@ void povorot_platformy()//поворот в БОЕВОЕ положение     
     digitalWrite(2, HIGH);//поворот
     digitalWrite(3, LOW);
     //analogWrite(12, 150);
-    delay(10);
-    Serial.println(analogRead(A8));
+    //delay(10);
+    //Serial.println(analogRead(A8));
     //t2=analogRead(A8);
   }
   digitalWrite(3, LOW);
@@ -208,7 +211,7 @@ void vozvrat_platformy()//в положение ПОХОДНОЕ       //ВЕР�
 {
   go_up();
   delay(200);
-  int t1, t2, t3, t4, t5, t, gran=8;//5 
+  int t1, t2, t3, t4, t5, t, gran=30;//5 
   t=1000;
   t1=analogRead(A8);
   delay(10);
@@ -229,15 +232,14 @@ void vozvrat_platformy()//в положение ПОХОДНОЕ       //ВЕР�
     digitalWrite(3, HIGH);//возвращение в исходную позицию
     digitalWrite(2, LOW);
     //analogWrite(12, 150);
-    delay(10);
-    Serial.println(analogRead(A8));
+    //delay(10);
+    //Serial.println(analogRead(A8));
     //t2=analogRead(A8);
   }
   digitalWrite(3, LOW);
   digitalWrite(2, LOW);
   delay(500);
 }
-
 
 
 void lenta_beret()//доработал, осталось проверить
@@ -261,7 +263,7 @@ void go_up()//ВЕРНО
   {
      digitalWrite(13, HIGH);
      digitalWrite(12, LOW);
-     Serial.println(1);
+     ////Serial.println(1);
      delay(50);
   }
   digitalWrite(13, LOW);
@@ -452,7 +454,7 @@ void rotate_right_180()
 
 void go_back_1() //перед захватом ящика //проверить
 {
-  int lin_speed=20; // скорость внутренней стороны? 20
+  int lin_speed=20; // скорость внутренней стороны.было 20
   int distance;
   int N_nazad_srabat=250; // НАСТРОИТЬ! было 220
 
@@ -460,23 +462,41 @@ void go_back_1() //перед захватом ящика //проверить
   int N_nazad_srabat2=200; // НАСТРОИТЬ! было 220
   
   int N=120;
-distance = 100;
+  distance = 100;
+  int datchik_num=0;
 
 //Serial.println(distance);
 
-while (distance>9)//(digitalRead(37)!=1)//было 7
+while (distance>9)     // было 7
 {
+  ////Serial.println(distance);
   digitalWrite(9, LOW);
   digitalWrite(10, HIGH);
   analogWrite(11, N);
   digitalWrite(7, HIGH);
   digitalWrite(8, LOW);
   analogWrite(6, N);
+  
 //delay(100);
   int right_sensor_szadi_val = digitalRead(44);
   int left_sensor_szadi_val = digitalRead(43);
   int right_sensor_szadi_val_2 = digitalRead(45);
   int left_sensor_szadi_val_2 = digitalRead(42);
+
+  int true_count=0;
+  if(right_sensor_szadi_val==color_of_line)
+    true_count+=1;
+  if(right_sensor_szadi_val_2==color_of_line)
+    true_count+=1;
+  if(left_sensor_szadi_val==color_of_line)
+    true_count+=1;
+  if(left_sensor_szadi_val_2==color_of_line)
+    true_count+=1;
+
+  if(true_count>=2) //на большом квадрате было 3
+  {
+    delay(delay_red);  //tcs230_delay); //int(tcs230_delay/2));
+  }
 
   if (right_sensor_szadi_val==color_of_line)
     {
@@ -484,6 +504,7 @@ while (distance>9)//(digitalRead(37)!=1)//было 7
       analogWrite(11, lin_speed);
      analogWrite(6, N_nazad_srabat);
      delay(100); //было 500
+     datchik_num=1;
    }
   if (left_sensor_szadi_val==color_of_line)
     {
@@ -491,6 +512,7 @@ while (distance>9)//(digitalRead(37)!=1)//было 7
       analogWrite(6, lin_speed);
       analogWrite(11, N_nazad_srabat);
      delay(100); //было 500
+     datchik_num=2;
     }
 
 
@@ -505,8 +527,16 @@ while (distance>9)//(digitalRead(37)!=1)//было 7
      
     analogWrite(6, 0);
     analogWrite(11, 0);
-     delay(150);
-     while (digitalRead(43)!=color_of_line) //3
+    delay(150);
+    if(datchik_num==4)
+    {
+      analogWrite(6, N);
+      analogWrite(11, N);
+      delay(kacheli_delay);
+    }
+    analogWrite(6, 0);
+    analogWrite(11, 0);
+     while ((digitalRead(43)!=color_of_line) &&(digitalRead(42)!=color_of_line))
      {
         digitalWrite(7, HIGH);
         digitalWrite(8, LOW);
@@ -514,13 +544,14 @@ while (distance>9)//(digitalRead(37)!=1)//было 7
         digitalWrite(9, HIGH);
         digitalWrite(10, LOW);
         analogWrite(11, 150);
-        delay(50);
+        datchik_num=3;
+        //delay(50);
      } 
      
   }
 
 
-  if ((left_sensor_szadi_val_2==color_of_line)/*&&(datchik==1)*/)
+  if ((left_sensor_szadi_val_2==color_of_line))  //поменял местами направление        /*&&(datchik==1)*/)
   {
    /*analogWrite(6, lin_speed2);
       analogWrite(11, N_nazad_srabat2);
@@ -528,7 +559,15 @@ while (distance>9)//(digitalRead(37)!=1)//было 7
     analogWrite(6, 0);
     analogWrite(11, 0);
      delay(150);
-    while (digitalRead(4)!=color_of_line)  //19
+     if(datchik_num==3)
+    {
+      analogWrite(6, N);
+      analogWrite(11, N);
+      delay(kacheli_delay);
+    }
+    analogWrite(6, 0);
+    analogWrite(11, 0);
+    while ((digitalRead(44)!=color_of_line)&&(digitalRead(45)!=color_of_line))  //19
     {
       digitalWrite(8, HIGH);
       digitalWrite(7, LOW);
@@ -536,7 +575,8 @@ while (distance>9)//(digitalRead(37)!=1)//было 7
       digitalWrite(10, HIGH);
       digitalWrite(9, LOW);
       analogWrite(11, 150);
-      delay(50);
+      datchik_num=4;
+      //delay(50);
     } 
     
   }
@@ -546,7 +586,7 @@ while (distance>9)//(digitalRead(37)!=1)//было 7
     
     distance=nazad.read();
     
-    //Serial.println(distance);
+    Serial.println(distance);
     
     //distance_szadi[0]=distance_szadi[1];
     //distance_szadi[1] = nazad.read();
@@ -558,6 +598,7 @@ analogWrite(11, 0);
 digitalWrite(8, HIGH);
 digitalWrite(7, LOW);
 analogWrite(6, 0);
+delay(10);
 lin_speed=40;
 }
 
@@ -569,8 +610,7 @@ lin_speed=40;
 //проверить
 void go_back_2()//после захвата ящика
 {
-   
-  int lin_speed=20; // скорость внутренней стороны? 20
+  int lin_speed=20; // скорость внутренней стороны.было 20
   int distance;
   int N_nazad_srabat=250; // НАСТРОИТЬ! было 220
 
@@ -578,24 +618,41 @@ void go_back_2()//после захвата ящика
   int N_nazad_srabat2=200; // НАСТРОИТЬ! было 220
   
   int N=120;
-distance = 100;
+  distance = 100;
+  int datchik_num=0;
 
 //Serial.println(distance);
 
 while (distance>20)//(digitalRead(37)!=1)//было 5
 {
-  Serial.println(distance);
+  ////Serial.println(distance);
   digitalWrite(9, LOW);
   digitalWrite(10, HIGH);
   analogWrite(11, N);
   digitalWrite(7, HIGH);
   digitalWrite(8, LOW);
   analogWrite(6, N);
+  
 //delay(100);
   int right_sensor_szadi_val = digitalRead(44);
   int left_sensor_szadi_val = digitalRead(43);
   int right_sensor_szadi_val_2 = digitalRead(45);
   int left_sensor_szadi_val_2 = digitalRead(42);
+
+  int true_count=0;
+  if(right_sensor_szadi_val==color_of_line)
+    true_count+=1;
+  if(right_sensor_szadi_val_2==color_of_line)
+    true_count+=1;
+  if(left_sensor_szadi_val==color_of_line)
+    true_count+=1;
+  if(left_sensor_szadi_val_2==color_of_line)
+    true_count+=1;
+
+  if(true_count>=2) //на большом квадрате было 3
+  {
+    delay(delay_red);  //tcs230_delay); //int(tcs230_delay/2));
+  }
 
   if (right_sensor_szadi_val==color_of_line)
     {
@@ -603,6 +660,7 @@ while (distance>20)//(digitalRead(37)!=1)//было 5
       analogWrite(11, lin_speed);
      analogWrite(6, N_nazad_srabat);
      delay(100); //было 500
+     datchik_num=1;
    }
   if (left_sensor_szadi_val==color_of_line)
     {
@@ -610,6 +668,7 @@ while (distance>20)//(digitalRead(37)!=1)//было 5
       analogWrite(6, lin_speed);
       analogWrite(11, N_nazad_srabat);
      delay(100); //было 500
+     datchik_num=2;
     }
 
 
@@ -624,8 +683,16 @@ while (distance>20)//(digitalRead(37)!=1)//было 5
      
     analogWrite(6, 0);
     analogWrite(11, 0);
-     delay(150);
-     while (digitalRead(43)!=color_of_line) //3
+    delay(150);
+    if(datchik_num==4)
+    {
+      analogWrite(6, N);
+      analogWrite(11, N);
+      delay(kacheli_delay);
+    }
+    analogWrite(6, 0);
+    analogWrite(11, 0);
+     while ((digitalRead(43)!=color_of_line) &&(digitalRead(42)!=color_of_line))
      {
         digitalWrite(7, HIGH);
         digitalWrite(8, LOW);
@@ -633,13 +700,14 @@ while (distance>20)//(digitalRead(37)!=1)//было 5
         digitalWrite(9, HIGH);
         digitalWrite(10, LOW);
         analogWrite(11, 150);
-        delay(50);
+        datchik_num=3;
+        //delay(50);
      } 
      
   }
 
 
-  if ((left_sensor_szadi_val_2==color_of_line)/*&&(datchik==1)*/)
+  if ((left_sensor_szadi_val_2==color_of_line))  //поменял местами направление        /*&&(datchik==1)*/)
   {
    /*analogWrite(6, lin_speed2);
       analogWrite(11, N_nazad_srabat2);
@@ -647,7 +715,15 @@ while (distance>20)//(digitalRead(37)!=1)//было 5
     analogWrite(6, 0);
     analogWrite(11, 0);
      delay(150);
-    while (digitalRead(4)!=color_of_line)  //19
+     if(datchik_num==3)
+    {
+      analogWrite(6, N);
+      analogWrite(11, N);
+      delay(kacheli_delay);
+    }
+    analogWrite(6, 0);
+    analogWrite(11, 0);
+    while ((digitalRead(44)!=color_of_line)&&(digitalRead(45)!=color_of_line))  //19
     {
       digitalWrite(8, HIGH);
       digitalWrite(7, LOW);
@@ -655,7 +731,8 @@ while (distance>20)//(digitalRead(37)!=1)//было 5
       digitalWrite(10, HIGH);
       digitalWrite(9, LOW);
       analogWrite(11, 150);
-      delay(50);
+      datchik_num=4;
+      //delay(50);
     } 
     
   }
@@ -665,7 +742,7 @@ while (distance>20)//(digitalRead(37)!=1)//было 5
     
     distance=nazad.read();
     
-    //Serial.println(distance);
+    Serial.println(distance);
     
     //distance_szadi[0]=distance_szadi[1];
     //distance_szadi[1] = nazad.read();
@@ -719,7 +796,7 @@ void go_front_to_stellazh() //проверить
   int left_sensor_4_val = digitalRead(29);
 
 
-  Serial.println(left_sensor_val);   //левый 3 ловит 1 всегда, а должен 0!
+  ////Serial.println(left_sensor_val);   //левый 3 ловит 1 всегда, а должен 0!
 
 
 
@@ -973,6 +1050,10 @@ analogWrite(11, 0); //N
  }
  dist=pered.read();
  distance2=platform.read();
+ /*Serial.print("dist = ");
+  Serial.println(dist);
+  Serial.print("distance2 = ");
+  Serial.println(distance2);*/
 }
  analogWrite(11, 0);
  analogWrite(6, 0);
@@ -1061,24 +1142,25 @@ void zahvat_from_floor_2()//захват со второго яруса
 void loop() {
   if(start==true)//пришел массив с rpi
   {//здесь switch, циклы массива и т.д
+    bool first_box=false;
     vozvrat_platformy();
     tcs230_counter=tcs230_delay;//попробовать убрать
     int dist=100;
     for (int j=0; j<size_arr; j++)
     {
-      Serial.print("Action = ");
+      /*Serial.print("Action = ");
       Serial.println(action[j]);
       Serial.print("Counter = ");
       Serial.println(counter[j]);
-      Serial.print("\n");
+      Serial.print("\n");*/
     }
     for (int i=0; i<size_arr; i++)
     {
-      Serial.print("act = ");
-      Serial.println(action[i]);
+      /////Serial.print("act = ");
+      /////Serial.println(action[i]);
       if(status<(size_arr-1))//убрать?
       {
-        Serial.println("barrier");
+        ////Serial.println("barrier");
         break;
       }
       if(dist<=7)
@@ -1138,7 +1220,7 @@ void loop() {
             if ((tcs230_counter>=tcs230_delay)&&(35<=freq_red)&&(100<=freq_green)&&(80<=freq_blue)&&(70>=freq_red)&&(145>=freq_green)&&(110>=freq_blue))//надо ли 145 в green? //((55<=freq_red)&&(120<=freq_green)&&(93<=freq_blue)&&(67>=freq_red)&&(140>=freq_green)&&(107>=freq_blue))//((18<=freq_red)&&(30<=freq_green)&&(25<=freq_blue)&&(25>=freq_red)&&(47>=freq_green)&&(40>=freq_blue))
             {//по идее, тут switch идет
               red=true;
-              Serial.println("red");
+              ////Serial.println("red");
               tcs230_counter=0;
             }
             if(red==true)//здесь ли??? 
@@ -1259,8 +1341,8 @@ void loop() {
           if(dist<=7)//оставить
           {
             status=i;
-            Serial.print("ststus");
-            Serial.println(status);
+           //// Serial.print("ststus");
+           //// Serial.println(status);
             break;
           }
           if(red==true)//здесь ли??? 
@@ -1279,7 +1361,7 @@ void loop() {
       tcs230_counter=0;
       if(status<(size_arr-1))//оставить
       {
-        Serial.println("barrier");
+        ////Serial.println("barrier");
         analogWrite(6, 0);
         analogWrite(11, 0);
         break;
@@ -1290,7 +1372,7 @@ void loop() {
       case 0:
         if(status<(size_arr-1))
         {
-          Serial.println("barrier");
+          ////Serial.println("barrier");
           analogWrite(6, 0);
           analogWrite(11, 0);
           break;
@@ -1304,7 +1386,16 @@ void loop() {
         analogWrite(11, 0);
         delay(700);
         rotate_left_stel();
-        delay(500);
+        delay(250);
+        if (first_box==true)//лента берет, если ящик уже есть на вилах
+        {
+          vozvrat_platformy();
+          delay(250);
+          lenta_beret();
+          delay(250);
+          go_up();
+        }
+        delay(250);
         go_back_1(); 
         delay(500);
         //лента берет, если ящик уже есть на вилах
@@ -1315,6 +1406,7 @@ void loop() {
         go_back_2();
         delay(500);
         vozvrat_platformy();
+        first_box=true;
         //возврат платформы должен быть 
         break;
       case 2:
@@ -1322,7 +1414,16 @@ void loop() {
         analogWrite(11, 0);
         delay(700);
         rotate_left_stel();
-        delay(500);
+        delay(250);
+        if (first_box==true)//лента берет, если ящик уже есть на вилах
+        {
+          vozvrat_platformy();
+          delay(250);
+          lenta_beret();
+          delay(250);
+          go_up();
+        }
+        delay(250);
         go_back_1(); 
         delay(500);
         //лента берет, если ящик уже есть на вилах
@@ -1333,6 +1434,7 @@ void loop() {
         go_back_2();
         delay(500);
         vozvrat_platformy();
+        first_box=true;
         //возврат платформы должен быть 
         break;
       case 3:
@@ -1340,7 +1442,16 @@ void loop() {
         analogWrite(11, 0);
         delay(700);
         rotate_right_stel();
-        delay(500);
+        delay(250);
+        if (first_box==true)//лента берет, если ящик уже есть на вилах
+        {
+          vozvrat_platformy();
+          delay(250);
+          lenta_beret();
+          delay(250);
+          go_up();
+        }
+        delay(250);
         go_back_1(); 
         delay(500);
         //лента берет, если ящик уже есть на вилах
@@ -1351,6 +1462,7 @@ void loop() {
         go_back_2();
         delay(500);
         vozvrat_platformy();
+        first_box=true;
         //возврат платформы должен быть 
         break;
       case 4:
@@ -1358,17 +1470,27 @@ void loop() {
         analogWrite(11, 0);
         delay(700);
         rotate_right_stel();
-        delay(500);
+        delay(250);
+        if (first_box==true)//лента берет, если ящик уже есть на вилах
+        {
+          vozvrat_platformy();
+          delay(250);
+          lenta_beret();
+          delay(250);
+          go_up();
+        }
+        delay(250);
         go_back_1(); 
         delay(500);
         //лента берет, если ящик уже есть на вилах
         povorot_platformy();
-        delay(500);
+        //delay(500);
         zahvat_from_floor_2();
         delay(500);
         go_back_2();
         delay(500);
         vozvrat_platformy();
+        first_box=true;
         //возврат платформы должен быть 
         break;
       case 5:
@@ -1382,8 +1504,17 @@ void loop() {
       case 9: //без поворота и захват ящика с первого этажа
         /*delay(500);
         go_back_1(); */
-        delay(500);
-        //лента берет, если ящик уже есть на вилах
+        delay(250);
+        if (first_box==true)//лента берет, если ящик уже есть на вилах
+        {
+          vozvrat_platformy();
+          delay(250);
+          lenta_beret();
+          delay(250);
+          go_up();
+        }
+        go_back_1();
+        delay(250);  
         povorot_platformy();
         delay(500);
         zahvat_from_floor_1();
@@ -1391,13 +1522,23 @@ void loop() {
         go_back_2();
         delay(500);
         vozvrat_platformy();
+        first_box=true;
         //возврат платформы должен быть 
         break;
       case 10: //без поворота и захват ящика со второго этажа
         /*delay(500);
         go_back_1(); */
-        delay(500);
-        //лента берет, если ящик уже есть на вилах
+        delay(250);
+        if (first_box==true)//лента берет, если ящик уже есть на вилах
+        {
+          vozvrat_platformy();
+          delay(250);
+          lenta_beret();
+          delay(250);
+          go_up();
+        }
+        go_back_1();
+        delay(250);
         povorot_platformy();
         delay(500);
         zahvat_from_floor_2();
@@ -1405,11 +1546,21 @@ void loop() {
         go_back_2();
         delay(500);
         vozvrat_platformy();
+        first_box=true;
         //возврат платформы должен быть 
         break;
       case 11: //поворот на 180 градусов и захват ящика с первого этажа
         rotate_right_180();
-        delay(500);
+        delay(250);
+        if (first_box==true)//лента берет, если ящик уже есть на вилах
+        {
+          vozvrat_platformy();
+          delay(250);
+          lenta_beret();
+          delay(250);
+          go_up();
+        }
+        delay(250);
         go_back_1(); 
         delay(500);
         //лента берет, если ящик уже есть на вилах
@@ -1420,12 +1571,22 @@ void loop() {
         go_back_2();
         delay(500);
         vozvrat_platformy();
+        first_box=true;
         //возврат платформы должен быть 
         break;
 
       case 12: //поворот на 180 градусов и захват ящика со второго этажа
         rotate_right_180();
-        delay(500);
+        delay(250);
+        if (first_box==true)//лента берет, если ящик уже есть на вилах
+        {
+          vozvrat_platformy();
+          delay(250);
+          lenta_beret();
+          delay(250);
+          go_up();
+        }
+        delay(250);
         go_back_1(); 
         delay(500);
         //лента берет, если ящик уже есть на вилах
@@ -1436,18 +1597,19 @@ void loop() {
         go_back_2();
         delay(500);
         vozvrat_platformy();
+        first_box=true;
         //возврат платформы должен быть 
         break;
       }
       if(status<(size_arr-1))
       {
-        Serial.println("barrier");
+        ////Serial.println("barrier");
         break;
       }
       //rotate_left();//МЕНЯТЬ ЭТОТ ПАРАМЕТРне относится к 4-й команде
       //delay(2000);
     }
-    Serial.println("end for");
+    ////Serial.println("end for");
     delay(500);
     //все счетчики приема массива должны обнулиться
     for(int j=0; j<size_arr; j++)
@@ -1461,7 +1623,7 @@ void loop() {
     size_arr=-1;
     status = 102; 
     recv_i=0;
-    Serial.println("end!");
+    ////Serial.println("end!");
   }
 }
 

@@ -43,7 +43,7 @@ void povorot_platformy()//поворот в БОЕВОЕ положение     
 {
   go_up();
   delay(200);
-  int t1, t2, t3, t4, t5, t, gran=950;//975
+  int t1, t2, t3, t4, t5, t, gran=995;//975
   t=0;
   t1=analogRead(A8);
   delay(10);
@@ -65,7 +65,7 @@ void povorot_platformy()//поворот в БОЕВОЕ положение     
     digitalWrite(3, LOW);
     //analogWrite(12, 150);
     delay(10);
-    Serial.println(analogRead(A8));
+    //Serial.println(analogRead(A8));
     //t2=analogRead(A8);
   }
   digitalWrite(3, LOW);
@@ -77,7 +77,7 @@ void vozvrat_platformy()//в положение ПОХОДНОЕ       //ВЕР�
 {
   go_up();
   delay(200);
-  int t1, t2, t3, t4, t5, t, gran=7;//5 
+  int t1, t2, t3, t4, t5, t, gran=30;//5 
   t=1000;
   t1=analogRead(A8);
   delay(10);
@@ -99,7 +99,7 @@ void vozvrat_platformy()//в положение ПОХОДНОЕ       //ВЕР�
     digitalWrite(2, LOW);
     //analogWrite(12, 150);
     delay(10);
-    Serial.println(analogRead(A8));
+    //Serial.println(analogRead(A8));
     //t2=analogRead(A8);
   }
   digitalWrite(3, LOW);
@@ -168,13 +168,17 @@ void loop() {//если сверху - разворот. если снизу - �
 //lenta_beret();
 
 vozvrat_platformy();
-
 delay(1000);
-go_down_to_lenta();
+povorot_platformy();
+delay(1000);
+
+/*vozvrat_platformy();
+delay(1000);
+lenta_beret();
 delay(1000);
 go_up();
 povorot_platformy();
-delay(1000);
+delay(1000);*/
 
 
 //delay(2000);
