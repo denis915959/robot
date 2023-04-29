@@ -467,7 +467,7 @@ void go_back_1() //перед захватом ящика //проверить
 
 //Serial.println(distance);
 
-while (distance>9)     // было 7
+while (distance>10)     // было 9
 {
   ////Serial.println(distance);
   digitalWrite(9, LOW);

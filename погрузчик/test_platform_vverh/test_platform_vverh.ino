@@ -22,5 +22,5 @@ void loop() {
   delay(tmp_verhny_floor);
   digitalWrite(12, LOW);
   digitalWrite(13, LOW);
-  delay(4000);
+  delay(1000);
 }
