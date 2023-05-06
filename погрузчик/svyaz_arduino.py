@@ -19,13 +19,19 @@ def readnumber():
     return num
 
 robot_action=[]
-robot_action.append(robot_path_node(5, 1))
-robot_action.append(robot_path_node(0, 1))
-robot_action.append(robot_path_node(6, 1))
-robot_action.append(robot_path_node(0, 1))
-robot_action.append(robot_path_node(5, 1))
-robot_action.append(robot_path_node(0, 2))
+robot_action.append(robot_path_node(5, 1))#1
+
+
 robot_action.append(robot_path_node(2, 1))
+robot_action.append(robot_path_node(12, 0))
+robot_action.append(robot_path_node(5, 0))
+robot_action.append(robot_path_node(6, 1))
+#robot_action.append(robot_path_node(0, 1))
+
+
+
+path=[0, 2, 3, 2, 0]
+
 
 sz_path=len(robot_action)
 writenumber(sz_path)
@@ -38,11 +44,18 @@ status=102
 while(status==102):
     status=readnumber()
     print(status)
-    if(status==101):#success
-        print("success")
-        break
-    if(status<101):
+    if(status<(sz_path-1)):
+		j_recv=readnumber()
+		num_path=0
+		for i in range(0, status):
+			num_path=num_path+robot_action[i].counter
+		num_path=num_path+j_recv
+		print("num_path = ", num_path)
+		print("path[num]=", path[num_path])
         print("barrier")
+        break
+    if(status==(sz_path-1)):
+        print("success")
         break
     time.sleep(0.1)
         

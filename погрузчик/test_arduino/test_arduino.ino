@@ -1,4 +1,4 @@
-#define n 33
+#define n 32
 
 #define type 0//0-digitalRead, 1- analog_read, 2- digitalWrite, 3- analogWrite
 void setup() {

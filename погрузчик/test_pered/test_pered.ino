@@ -9,19 +9,50 @@ void setup() {
 Serial.begin(9600);
 pinMode(22, INPUT);//правый датчик
 pinMode(23, INPUT);//левый датчик
-pinMode(19, INPUT);//правый датчик сзади
-pinMode(20, INPUT);//левый датчик сзади
+
 pinMode(6, OUTPUT);//правый
 pinMode(7, OUTPUT);//правый минус
 pinMode(8, OUTPUT);//правый плюс
 pinMode(9, OUTPUT);//левый минус
 pinMode(10, OUTPUT);//левый плюс
 pinMode(11, OUTPUT);//левый
-pinMode(24, INPUT);//правый датчик 2, возможно убрать
-pinMode(25, INPUT);//возможно убрать
-pinMode(40, INPUT);//кнопка
+
 //pinMode(37, INPUT);//датчик на шасси
 }
+int t_180=3200;
+const int n_rt=200;//15-200, скорость поворота для функций типа rotate
+bool color_of_line=false;//0-белый, 1 - черный
+
+void rotate_right_180()
+{
+  
+  digitalWrite(8, HIGH);
+  digitalWrite(7, LOW);
+  analogWrite(6, n_rt);
+  digitalWrite(10, HIGH);
+  digitalWrite(9, LOW);
+  analogWrite(11, n_rt);
+  delay(t_180);//конец поворота по таймеру
+  /*analogWrite(6, 0);
+  analogWrite(11, 0);
+  delay(5000); //для подбора коэффициэнта t_180 в разных режимах */
+  while (digitalRead(22)!=color_of_line)//поворот по датчику
+  {
+    digitalWrite(8, HIGH);
+    digitalWrite(7, LOW);
+    analogWrite(6, n_rt);
+    digitalWrite(10, HIGH);
+    digitalWrite(9, LOW);
+    analogWrite(11, n_rt);
+    delay(20);
+    // servo1.write(rotate_v);
+  }//конец поворота по датчику
+  
+  analogWrite(6, 0);
+  analogWrite(11, 0);
+  delay(10); 
+}
+
 
 void loop() {
   // put your main code here, to run repeatedly:
@@ -64,116 +95,12 @@ int number_povtor=8;//было 20
 bool flag=false;
 bool go_line=true;
 bool radio_rotate=false;
-if(digitalRead(40)==1)
-{
-bool color_of_line=false;//0-белый, 1 - черный
-distance1 = pered.read();
-if (distance1==0)
-  {
-    Serial.println(distance1);
-    pinMode(26, OUTPUT);
-    digitalWrite(26, LOW);
-    delay(100);
-    pinMode(26, INPUT);
-    distance1 = pered.read();
-    
-  }
-int distance2 = platform.read();
-Serial.println(distance1);
-while(distance1>1)/*&&(distance2>2))*///(digitalRead(37)!=1)//движение назад по линии// 14 было, 10
-{
-  Serial.println(distance1);
-digitalWrite(10, LOW);
-digitalWrite(9, HIGH);
-analogWrite(11, N);
-digitalWrite(8, HIGH);
-digitalWrite(7, LOW);
-analogWrite(6, N);
-//delay(100);
-right_sensor_val = digitalRead(22);
-left_sensor_val = digitalRead(23);
-right_sensor_2_val = digitalRead(24);
-left_sensor_2_val = digitalRead(25);
-if (left_sensor_val==color_of_line) 
-  {
-    N=150;
-    analogWrite(6, lin_speed);
-    analogWrite(11, N);
-    delay(line_true); 
-  }
-  N=100;
-  digitalWrite(8, HIGH);
-  digitalWrite(7, LOW);
-  analogWrite(6, N);//желательно скорость 200 
-  if (right_sensor_val==color_of_line)
-  {
-    N=150;
-    analogWrite(6, N);
-    analogWrite(11, lin_speed);
-    delay(line_true); 
-  }
-  N=100;
-  digitalWrite(10, LOW);
-  digitalWrite(9, HIGH);
-  analogWrite(11, N);
-  if ((left_sensor_2_val==color_of_line)/*&&(datchik==1)*/) 
-  {
-     while (digitalRead(22)!=color_of_line)
-     {
-        digitalWrite(7, HIGH);
-        digitalWrite(8, LOW);
-        analogWrite(6, n);
-        digitalWrite(9, HIGH);
-        digitalWrite(10, LOW);
-        analogWrite(11, n);
-        delay(50);
-     } 
-  }
-  digitalWrite(8, HIGH);
-  digitalWrite(7, LOW);
-  analogWrite(6, N);
-  digitalWrite(10, LOW);
-  digitalWrite(9, HIGH);
-  analogWrite(11, N);
 
-  if ((right_sensor_2_val==color_of_line)/*&&(datchik==1)*/)
-  {
-    while (digitalRead(23)!=color_of_line)
-    {
-      digitalWrite(8, HIGH);
-      digitalWrite(7, LOW);
-      analogWrite(6, n);
-      digitalWrite(10, HIGH);
-      digitalWrite(9, LOW);
-      analogWrite(11, n);
-      delay(50);
-    } 
-  }
-  digitalWrite(8, HIGH);
-  digitalWrite(7, LOW);
-  analogWrite(6, N);
-  digitalWrite(10, LOW);
-  digitalWrite(9, HIGH);
-  analogWrite(11, N);
-  distance1 = pered.read();
-  Serial.println(distance1);
-  if (distance1==0)
-  {
-    Serial.println(distance1);
-    pinMode(26, OUTPUT);
-    digitalWrite(26, LOW);
-    delay(100);
-    pinMode(26, INPUT);
-    distance1 = pered.read();
-  }
-  distance2 = platform.read();
- }
-  digitalWrite(10, LOW);
-digitalWrite(9, HIGH);
-analogWrite(11, 0);
-digitalWrite(8, HIGH);
-digitalWrite(7, LOW);
-analogWrite(6, 0);
-delay(1500);
-}
+
+rotate_right_180();
+delay(5000);
+
+
+
+
 }
