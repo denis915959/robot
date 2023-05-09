@@ -19,6 +19,9 @@ pinMode(11, OUTPUT);//левый
 
 //pinMode(37, INPUT);//датчик на шасси
 }
+
+int t_operezhenie=200;//доворот после срабатывания датчика
+const int t=1500;//время поворота без датчика, 1500
 int t_180=3200;
 const int n_rt=200;//15-200, скорость поворота для функций типа rotate
 bool color_of_line=false;//0-белый, 1 - черный
@@ -52,6 +55,47 @@ void rotate_right_180()
   analogWrite(11, 0);
   delay(10); 
 }
+
+void rotate_right_180_stel()
+{
+  
+  digitalWrite(8, HIGH);
+  digitalWrite(7, LOW);
+  analogWrite(6, n_rt);
+  digitalWrite(10, HIGH);
+  digitalWrite(9, LOW);
+  analogWrite(11, n_rt);
+  delay(t);//конец поворота по таймеру
+//  servo1.write(rotate_v);
+  while (digitalRead(22)!=color_of_line)//поворот по датчику
+  {
+    digitalWrite(8, HIGH);
+    digitalWrite(7, LOW);
+    analogWrite(6, n_rt);
+    digitalWrite(10, HIGH);
+    digitalWrite(9, LOW);
+    analogWrite(11, n_rt);
+    delay(20);
+    // servo1.write(rotate_v);
+  }//конец поворота по датчику
+  delay(t_operezhenie+t);//конец доворота по таймеру
+  while ((digitalRead(44)!=color_of_line)/*&&(digitalRead(45)!=color_of_line)*/&&(digitalRead(27)!=color_of_line))//поворот по датчику (передний контур - страхующий, если задние конторы пройдут мимо линии)
+  {
+    digitalWrite(8, HIGH);
+    digitalWrite(7, LOW);
+    analogWrite(6, n_rt);
+    digitalWrite(10, HIGH);
+    digitalWrite(9, LOW);
+    analogWrite(11, n_rt);
+    delay(20);
+    // servo1.write(rotate_v);
+  }//конец поворота по датчику
+  //delay(t_operezhenie);
+  analogWrite(6, 0);
+  analogWrite(11, 0);
+  delay(10); 
+}
+
 
 
 void loop() {
@@ -97,7 +141,7 @@ bool go_line=true;
 bool radio_rotate=false;
 
 
-rotate_right_180();
+rotate_right_180_stel();
 delay(5000);
 
 

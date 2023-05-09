@@ -2,7 +2,7 @@
 #include <Ultrasonic.h>
 Servo servo1;
 
-Ultrasonic ultrasonic(35, 34);//(31, 30)
+Ultrasonic ultrasonic(41, 40);//(31, 30)
 int distance;
 int n=150;//скорость поворота, на свинцовом аккуме 140
 int t=1500;//время поворота без датчика, 1200

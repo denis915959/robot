@@ -8,9 +8,9 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
 
-  while (digitalRead(32)==0)
+  while (digitalRead(32)==1)
   {
-    digitalWrite(12, HIGH);
+    digitalWrite(12, HIGH); //все верно выставлено для движения вниз!!!!!!!!!!!!!!!!!!!
     digitalWrite(13, LOW);
     delay(50);
   }

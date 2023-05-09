@@ -36,14 +36,14 @@ pinMode(12, OUTPUT);//платформа вверх/вниз
 pinMode(13, OUTPUT);//платформа вверх/вниз
 pinMode(A8, INPUT);//потенциометр
 pinMode(36, INPUT);//концевик лента
-Serial.begin(9600);
+//Serial.begin(9600);
 
 }
 void povorot_platformy()//поворот в БОЕВОЕ положение          //ВЕРНО
 {
   go_up();
   delay(200);
-  int t1, t2, t3, t4, t5, t, gran=995;//975
+  int t1, t2, t3, t4, t5, t, gran=1020;//975
   t=0;
   t1=analogRead(A8);
   delay(10);
@@ -167,18 +167,18 @@ void loop() {//если сверху - разворот. если снизу - �
 //pogruzchik_kladet_box_na_lentu();
 //lenta_beret();
 
-vozvrat_platformy();
+/*vozvrat_platformy();
 delay(1000);
 povorot_platformy();
-delay(1000);
+delay(1000);*/
 
-/*vozvrat_platformy();
+vozvrat_platformy();
 delay(1000);
 lenta_beret();
 delay(1000);
 go_up();
-povorot_platformy();
-delay(1000);*/
+//povorot_platformy();
+delay(1000);
 
 
 //delay(2000);

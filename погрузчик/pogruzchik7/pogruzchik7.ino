@@ -8,15 +8,15 @@ Ultrasonic ultrasonic(39, 38);
 int distance1;
 
 int size_arr=-1;
-int status = 102; //102 - не инициализирован, если все ок - то номер последнего элемента массива, иначе номер элемента массива команд, на котром препятствие
-int action[100];
-int counter[100];
+int status = 25; //25 - не инициализирован, если все ок - ....
+int action[25];
+int counter[25];
 int recv_i=0; //счетчик для приема данных
 int arr_count=0; //счетчик номера массива при приеме данных
 bool flag_counter=false; //для приема данных
 bool start=false; //если true, то массив принят до конца и можно начинать движение
 int mode=-1; //номер режима раьоты робота, 1 - к ящикам, 2 - объезд препятствия
-int j_send=-1; //номер итерации цикла по count, на котором препятствие возникло. нужно для нахождения номера последнего пройденного перекреска
+int j_send=0; //номер итерации цикла по count, на котором препятствие возникло. нужно для нахождения номера последнего пройденного перекреска
 
 
 
@@ -103,6 +103,7 @@ bool red=false;
 int kacheli_delay=300;  //когда возникает ситуаця, что линию видят только второй контур, возникают "качели". этот таймер преодолевает это расстояние
 int delay_red=200;  //больше нельзя, т.к у задних датчиков возможна ситуация, что на линии сраьотают два одновременн (редко, но бывает). поэтому задержка небольшая должна быть
 const int t_180=3200;//время поворота на 180 без датчика. 
+const int t_180_old=1500;
 
 // Пины подключения датчика цвета
 int pinS0=46;
@@ -166,7 +167,7 @@ void setup()
   pinMode(13, OUTPUT);//платформа вверх/вниз
   pinMode(A8, INPUT);//потенциометр
   pinMode(36, INPUT);//концевик лента
-  ////Serial.begin(9600);   // настроить последовательный порт для вывода
+  //Serial.begin(9600);   // настроить последовательный порт для вывода
   Wire.begin(0x20/*SLAVE_ADDRESS*/);         // подключиться к шине i2c (адрес для мастера не обязателен)
   Wire.onReceive(receiveData);
   Wire.onRequest(sendData);
@@ -181,7 +182,7 @@ void povorot_platformy()//поворот в БОЕВОЕ положение     
 {
   go_up();
   delay(200);
-  int t1, t2, t3, t4, t5, t, gran=985;//965 с проводом
+  int t1, t2, t3, t4, t5, t, gran=1005;//995
   t=0;
   t1=analogRead(A8);
   delay(10);
@@ -362,7 +363,7 @@ void rotate_right()
   digitalWrite(10, HIGH);
   digitalWrite(9, LOW);
   analogWrite(11, n_rt);
-  delay(t);//конец поворота по таймеру
+  delay(t);//конец поворота по таймеру. где он определен??????????????????????????????????????????????????????????????
 //  servo1.write(rotate_v);
   while (digitalRead(22)!=color_of_line)//поворот по датчику
   {
@@ -422,7 +423,7 @@ void rotate_right_180_stel()
   digitalWrite(10, HIGH);
   digitalWrite(9, LOW);
   analogWrite(11, n_rt);
-  delay(t);//конец поворота по таймеру
+  delay(t_180_old);//конец поворота по таймеру
 //  servo1.write(rotate_v);
   while (digitalRead(22)!=color_of_line)//поворот по датчику
   {
@@ -435,8 +436,8 @@ void rotate_right_180_stel()
     delay(20);
     // servo1.write(rotate_v);
   }//конец поворота по датчику
-  delay(t_operezhenie+t);//конец доворота по таймеру
-  while (digitalRead(44)!=color_of_line)//поворот по датчику, было 23
+  delay(t_operezhenie+t_180_old);//конец доворота по таймеру
+  while ((digitalRead(44)!=color_of_line)&&(digitalRead(27)!=color_of_line))//поворот по датчику (передний контур - страхующий, если задние конторы пройдут мимо линии)
   {
     digitalWrite(8, HIGH);
     digitalWrite(7, LOW);
@@ -452,6 +453,7 @@ void rotate_right_180_stel()
   analogWrite(11, 0);
   delay(10); 
 }
+
 
 
 
@@ -621,7 +623,7 @@ while (distance>10)     // было 9
     
     distance=nazad.read();
     
-    Serial.println(distance);
+    //Serial.println(distance);
     
     //distance_szadi[0]=distance_szadi[1];
     //distance_szadi[1] = nazad.read();
@@ -777,7 +779,7 @@ while (distance>20)//(digitalRead(37)!=1)//было 5
     
     distance=nazad.read();
     
-    Serial.println(distance);
+    //Serial.println(distance);
     
     //distance_szadi[0]=distance_szadi[1];
     //distance_szadi[1] = nazad.read();
@@ -1177,18 +1179,20 @@ void zahvat_from_floor_2()//захват со второго яруса
 void loop() {
   if(start==true)//пришел массив с rpi
   {//здесь switch, циклы массива и т.д
+   
     bool first_box=false;
-    vozvrat_platformy();
+    vozvrat_platformy(); //при отключенном питании идет блокирование
+    //Serial.println("GO!");
     tcs230_counter=tcs230_delay;//попробовать убрать
     int dist=100;
-    for (int j=0; j<size_arr; j++)
+    /*for (int j=0; j<size_arr; j++)
     {
-      /*Serial.print("Action = ");
+      Serial.print("Action = ");
       Serial.println(action[j]);
       Serial.print("Counter = ");
       Serial.println(counter[j]);
-      Serial.print("\n");*/
-    }
+      Serial.print("\n");
+    }*/
     for (int i=0; i<size_arr; i++)
     {
       /////Serial.print("act = ");
@@ -1376,7 +1380,7 @@ void loop() {
           if(dist<=7)//оставить
           {
             status=i;
-            j_send=j; 
+            j_send=j; //
            //// Serial.print("ststus");
            //// Serial.println(status);
             break;
@@ -1663,7 +1667,8 @@ void loop() {
     flag_counter=false; //для приема данных
     start=false;
     size_arr=-1;
-    status = 102; 
+    status = 25;
+    j_send=0; 
     recv_i=0;
     ////Serial.println("end!");
   }
@@ -1684,12 +1689,20 @@ void receiveData(int byteCount) //byteCount нельзя удалить, так 
 
   if(recv_i==0)
   {
-    mode=recv_buf[0];      
+    mode=recv_buf[0];  
+    //Serial.println(mode);    
   }
+  
   if((recv_i==1)&&(mode==1))
-      size_arr=recv_buf[0];
+  {
+    
+    size_arr=recv_buf[0];
+    //Serial.println(size_arr);
+  }
   if ((recv_i>1)&&(mode==1))
   {
+    //Serial.print("arr_count   ");
+    //Serial.println(arr_count);
     if ((arr_count<=size_arr)&&(flag_counter==false))
     {
       //recv_buf[0]=Wire.read();
@@ -1729,21 +1742,38 @@ void receiveData(int byteCount) //byteCount нельзя удалить, так 
     }
   }*/
   
-  if(arr_count==(size_arr-1))
+  if(arr_count==size_arr) //(size_arr-1))
   {
     if(mode == 1)
+    {
+      //Serial.println("start!");
       start=true;
+    }
+      
     //if (mode==2), то mode2_flag =true {...............}
   }
-  //Serial.print(size_arr);
   recv_i++;
 }
 
 void sendData()
 {
-  Wire.write(status);
+  //Wire.beginTransmission(0x20);
+  //char data[2]; //иначе не работает отправка массива 
+  //data[0]=status;
+  //data[1]=j_send;
+  char message=status*10+j_send;
+  Wire.write(message); //data, 2);
+  //Wire.endTransmission();
+  //Wire.write(254);//data);//, 2);
+
+  /*if (status<(size_arr-1))
+  {
+    Wire.write(j_send);
+  }*/
+  
+  /*Wire.write(status);
   if (status<(size_arr-1))
   {
     Wire.write(j_send);
-  }
+  }*/
 }

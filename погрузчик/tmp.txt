@@ -1,0 +1,14 @@
+data[2];
+  data[0]=status;
+  data[1]=j_send;
+  Wire.write(data, 2);
+  if (status<(size_arr-1))
+  {
+    Wire.write(j_send);
+  }
+  
+  /*Wire.write(status);
+  if (status<(size_arr-1))
+  {
+    Wire.write(j_send);
+  }*/
