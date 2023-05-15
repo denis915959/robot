@@ -36,14 +36,14 @@ pinMode(12, OUTPUT);//платформа вверх/вниз
 pinMode(13, OUTPUT);//платформа вверх/вниз
 pinMode(A8, INPUT);//потенциометр
 pinMode(36, INPUT);//концевик лента
-//Serial.begin(9600);
+Serial.begin(9600);
 
 }
 void povorot_platformy()//поворот в БОЕВОЕ положение          //ВЕРНО
 {
   go_up();
   delay(200);
-  int t1, t2, t3, t4, t5, t, gran=1020;//975
+  int t1, t2, t3, t4, t5, t, gran=1023;//975
   t=0;
   t1=analogRead(A8);
   delay(10);
@@ -56,6 +56,11 @@ void povorot_platformy()//поворот в БОЕВОЕ положение     
   while(t<gran)//(abs(t2-t1)<diap)
   {
     t5=analogRead(A8);
+    if(t1==t2==t3==t4==t5)
+    {
+      //Serial.println("Contact!");
+      break;
+    }
     t=(t1+t2+t3+t4+t5)/5;
     t1=t2;
     t2=t3;
@@ -65,7 +70,7 @@ void povorot_platformy()//поворот в БОЕВОЕ положение     
     digitalWrite(3, LOW);
     //analogWrite(12, 150);
     delay(10);
-    //Serial.println(analogRead(A8));
+    Serial.println(analogRead(A8));
     //t2=analogRead(A8);
   }
   digitalWrite(3, LOW);
@@ -110,7 +115,7 @@ void lenta_beret()//доработал, осталось проверить
 {
   go_down_to_lenta();
   distance = ultrasonic.read();//47 - echo (белый провод)
-  while (distance>6)
+  while (distance>4) //6
   {
      
      digitalWrite(4, HIGH);//ящик отъезжает

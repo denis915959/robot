@@ -17,6 +17,7 @@ bool flag_counter=false; //для приема данных
 bool start=false; //если true, то массив принят до конца и можно начинать движение
 int mode=-1; //номер режима раьоты робота, 1 - к ящикам, 2 - объезд препятствия
 int j_send=0; //номер итерации цикла по count, на котором препятствие возникло. нужно для нахождения номера последнего пройденного перекреска
+int number_send_message_3=0;
 
 
 
@@ -35,7 +36,7 @@ int N=80;//было 100, это на что то влияет??? скорост�
 //int n2=140;//поворот к стеллажу, на свинцовом аккуме 150
 //int t_w=20;
 
-int t_operezhenie=200;//доворот после срабатывания датчика
+
 
 //int go_front = 120;//200
 //int go_back_t=500;//450
@@ -91,7 +92,8 @@ bool key;
 
 
 //ЧИСТОВОЙ БЛОК ПЕРЕМЕННЫХ
-const int n_rt=200;//15-200, скорость поворота для функций типа rotate
+int t_operezhenie=0;//(200)  доворот после срабатывания датчика
+const int n_rt=220;//15-200, скорость поворота для функций типа rotate
 const int t=1200;//время поворота без датчика, 1500
 const int tcs230_delay=1000;//1000 - достаточно даже при напряжении 11,4 вольта, (на 1500 мертвая зона 18,5 см при 11,6 вольта)
 int tcs230_counter=tcs230_delay;
@@ -167,7 +169,7 @@ void setup()
   pinMode(13, OUTPUT);//платформа вверх/вниз
   pinMode(A8, INPUT);//потенциометр
   pinMode(36, INPUT);//концевик лента
-  //Serial.begin(9600);   // настроить последовательный порт для вывода
+  Serial.begin(9600);   // настроить последовательный порт для вывода
   Wire.begin(0x20/*SLAVE_ADDRESS*/);         // подключиться к шине i2c (адрес для мастера не обязателен)
   Wire.onReceive(receiveData);
   Wire.onRequest(sendData);
@@ -182,7 +184,7 @@ void povorot_platformy()//поворот в БОЕВОЕ положение     
 {
   go_up();
   delay(200);
-  int t1, t2, t3, t4, t5, t, gran=1005;//995
+  int t1, t2, t3, t4, t5, t, gran=995;//1005
   t=0;
   t1=analogRead(A8);
   delay(10);
@@ -195,6 +197,10 @@ void povorot_platformy()//поворот в БОЕВОЕ положение     
   while(t<gran)//(abs(t2-t1)<diap)
   {
     t5=analogRead(A8);
+    if(t1==t2==t3==t4==t5) //этого не было раньше!
+    {
+      break;
+    }
     t=(t1+t2+t3+t4+t5)/5;
     t1=t2;
     t2=t3;
@@ -251,7 +257,7 @@ void lenta_beret()//доработал, осталось проверить
 {
   go_down_to_lenta();
   distance = ultrasonic.read();//47 - echo (белый провод)
-  while (distance>6)
+  while (distance>4)
   {
      
      digitalWrite(4, HIGH);//ящик отъезжает
@@ -425,7 +431,7 @@ void rotate_right_180_stel()
   analogWrite(11, n_rt);
   delay(t_180_old);//конец поворота по таймеру
 //  servo1.write(rotate_v);
-  while (digitalRead(22)!=color_of_line)//поворот по датчику
+  while (digitalRead(44)!=color_of_line)//поворот по датчику
   {
     digitalWrite(8, HIGH);
     digitalWrite(7, LOW);
@@ -433,11 +439,11 @@ void rotate_right_180_stel()
     digitalWrite(10, HIGH);
     digitalWrite(9, LOW);
     analogWrite(11, n_rt);
-    delay(20);
+    //delay(20);
     // servo1.write(rotate_v);
   }//конец поворота по датчику
   delay(t_operezhenie+t_180_old);//конец доворота по таймеру
-  while ((digitalRead(44)!=color_of_line)&&(digitalRead(27)!=color_of_line))//поворот по датчику (передний контур - страхующий, если задние конторы пройдут мимо линии)
+  while ((digitalRead(45)!=color_of_line)&&(digitalRead(44)!=color_of_line)&&(digitalRead(27)!=color_of_line))//поворот по датчику (передний контур - страхующий, если задние конторы пройдут мимо линии)
   {
     digitalWrite(8, HIGH);
     digitalWrite(7, LOW);
@@ -504,7 +510,7 @@ void go_back_1() //перед захватом ящика //проверить
 
 //Serial.println(distance);
 
-while (distance>10)     // было 9
+while (distance>11)     // было 10 на подсаженном аккуме
 {
   ////Serial.println(distance);
   digitalWrite(9, LOW);
@@ -1256,6 +1262,7 @@ void loop() {
             // вывод в последовательный порт
             /*Serial.print(" B= ");
             Serial.println(freq_blue);*/
+            Serial.println(tcs230_counter);
             if ((tcs230_counter>=tcs230_delay)&&(35<=freq_red)&&(100<=freq_green)&&(80<=freq_blue)&&(70>=freq_red)&&(145>=freq_green)&&(110>=freq_blue))//надо ли 145 в green? //((55<=freq_red)&&(120<=freq_green)&&(93<=freq_blue)&&(67>=freq_red)&&(140>=freq_green)&&(107>=freq_blue))//((18<=freq_red)&&(30<=freq_green)&&(25<=freq_blue)&&(25>=freq_red)&&(47>=freq_green)&&(40>=freq_blue))
             {//по идее, тут switch идет
               red=true;
@@ -1393,12 +1400,14 @@ void loop() {
           analogWrite(11, 0);
           //delay(500);
         }
-        //tcs230_counter=0;
+        tcs230_counter=0;  //ЭТОГО НЕ БЫЛО
         red=false;
       }
       //Serial.println("end J");
       red=false;
-      tcs230_counter=0;
+
+      tcs230_counter=0; //это я убрал!!!
+
       if(status<(size_arr-1))//оставить
       {
         ////Serial.println("barrier");
@@ -1757,23 +1766,20 @@ void receiveData(int byteCount) //byteCount нельзя удалить, так 
 
 void sendData()
 {
-  //Wire.beginTransmission(0x20);
-  //char data[2]; //иначе не работает отправка массива 
-  //data[0]=status;
-  //data[1]=j_send;
-  char message=status*10+j_send;
-  Wire.write(message); //data, 2);
-  //Wire.endTransmission();
-  //Wire.write(254);//data);//, 2);
-
-  /*if (status<(size_arr-1))
+  if(number_send_message_3==0) //начало пакета 
   {
-    Wire.write(j_send);
-  }*/
-  
-  /*Wire.write(status);
-  if (status<(size_arr-1))
+    char message=255;
+    Wire.write(message);
+  }
+  if(number_send_message_3==1)
   {
-    Wire.write(j_send);
-  }*/
+    char message=j_send;
+    Wire.write(message); 
+  }
+  if(number_send_message_3==2) //status отправляется последним, чтобы распберри успела считать j_send
+  {
+    char message=status;
+    Wire.write(message); 
+  }
+  number_send_message_3=(number_send_message_3+1)%3;
 }

@@ -1,3 +1,5 @@
+#скопировать этот файл на распберри в выходные и робота тестировать! код по идее рабочий
+
 import smbus
 import time
 import os
@@ -42,19 +44,21 @@ if(mode==1):
         writenumber(robot_action[i].counter)
         print(robot_action[i].action, "  ", robot_action[i].counter)
 
-    status=102
-    while(status==102):
-        #recv_arr=readnumber()
-        #status=recv_arr[0]
-        #j_recv=recv_arr[1]
-        status=readnumber()
+    status=25  #по умолчанию
+    while(status==25):
+	recv_message=readnumber()
+	len_m=len(recv_message)
+	j_recv = int(recv_message[len_m-1])
+	status=0
+	for i in range(0, (len_m-1)):
+		status = 10*status + int(recv_message[i])
         print("status = ", status)
         print("j_recv = ", j_recv)
-        if(status<(sz_path-1)): #status - number elem,ent of array, which is number of last success crossroad
+        if(status<(sz_path-1)): #status - номер элемента массива robot_action, который был последним выполнен успешно
             num_path=0
             print("j_recv = ", j_recv)
             for i in range(0, (status-1)):
-                num_path=num_path+robot_action[i].counter #=6 on othod to second crossroad
+                num_path=num_path+robot_action[i].counter 
             num_path=num_path+j_recv
             print("num_path = ", num_path)
             print("path[num]=", path[num_path])
