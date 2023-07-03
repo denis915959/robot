@@ -61,7 +61,7 @@ bool radio_rotate=false;
 bool color_of_line=false;//0-белый, 1 - черный
 
 int rt_1=120;  //было 140
-int lin_speed_1=40;  //ЭТАЛОН было 20, затем 40, но не очень. 25 более-менее (вроде осечек не было, но медленно). Это скорость при срабатывании датчиков линии первого уровня
+int lin_speed_1=40;  //ЭТАЛОН 50. Это скорость при срабатывании датчиков линии первого уровня
 
 int line_true_1=5;// было 200, на 10 уже хорошо работает
 
@@ -85,7 +85,7 @@ int line_true_level2=50;
 int line_true_2=50; //было 300
 
 
-int n=150;//скорость разворота до 1 контура, было 200
+int n=200;//скорость разворота до 1 контура, было 150
 
 bool key;
 
@@ -106,6 +106,7 @@ int kacheli_delay=300;  //когда возникает ситуаця, что �
 int delay_red=200;  //больше нельзя, т.к у задних датчиков возможна ситуация, что на линии сраьотают два одновременн (редко, но бывает). поэтому задержка небольшая должна быть
 const int t_180=3200;//время поворота на 180 без датчика. 
 const int t_180_old=1500;
+const int N_nazad=185;
 
 // Пины подключения датчика цвета
 int pinS0=46;
@@ -170,6 +171,7 @@ void setup()
   pinMode(A8, INPUT);//потенциометр
   pinMode(36, INPUT);//концевик лента
   Serial.begin(9600);   // настроить последовательный порт для вывода
+  pinMode(51, INPUT);//концевик поворот платформы
   Wire.begin(0x20/*SLAVE_ADDRESS*/);         // подключиться к шине i2c (адрес для мастера не обязателен)
   Wire.onReceive(receiveData);
   Wire.onRequest(sendData);
@@ -194,7 +196,7 @@ void povorot_platformy()//поворот в БОЕВОЕ положение     
   delay(10);
   t4=analogRead(A8);
   delay(10);
-  while(t<gran)//(abs(t2-t1)<diap)
+  while((t<gran)&&(digitalRead(51)==0))//(abs(t2-t1)<diap)
   {
     t5=analogRead(A8);
     if(t1==t2==t3==t4==t5) //этого не было раньше!
@@ -497,7 +499,7 @@ void rotate_right_180()
 
 void go_back_1() //перед захватом ящика //проверить
 {
-  int lin_speed=20; // скорость внутренней стороны.было 20
+  //int lin_speed=20; // скорость внутренней стороны.было 20
   int distance;
   int N_nazad_srabat=250; // НАСТРОИТЬ! было 220
 
@@ -510,7 +512,7 @@ void go_back_1() //перед захватом ящика //проверить
 
 //Serial.println(distance);
 
-while (distance>11)     // было 10 на подсаженном аккуме
+while (distance>13)     // было 11. Возможно, следует сделать 12
 {
   ////Serial.println(distance);
   digitalWrite(9, LOW);
@@ -583,10 +585,10 @@ while (distance>11)     // было 10 на подсаженном аккуме
      {
         digitalWrite(7, HIGH);
         digitalWrite(8, LOW);
-        analogWrite(6, 150);
+        analogWrite(6, N_nazad);
         digitalWrite(9, HIGH);
         digitalWrite(10, LOW);
-        analogWrite(11, 150);
+        analogWrite(11, N_nazad);
         datchik_num=3;
         //delay(50);
      } 
@@ -614,10 +616,10 @@ while (distance>11)     // было 10 на подсаженном аккуме
     {
       digitalWrite(8, HIGH);
       digitalWrite(7, LOW);
-      analogWrite(6, 150);
+      analogWrite(6, N_nazad); //150
       digitalWrite(10, HIGH);
       digitalWrite(9, LOW);
-      analogWrite(11, 150);
+      analogWrite(11, N_nazad);//150
       datchik_num=4;
       //delay(50);
     } 
@@ -642,7 +644,7 @@ digitalWrite(8, HIGH);
 digitalWrite(7, LOW);
 analogWrite(6, 0);
 delay(10);
-lin_speed=40;
+//lin_speed=40;
 }
 
 
@@ -653,7 +655,7 @@ lin_speed=40;
 //проверить
 void go_back_2()//после захвата ящика
 {
-  int lin_speed=20; // скорость внутренней стороны.было 20
+  //int lin_speed=20; // скорость внутренней стороны.было 20
   int distance;
   int N_nazad_srabat=250; // НАСТРОИТЬ! было 220
 
@@ -671,10 +673,10 @@ while (distance>20)//(digitalRead(37)!=1)//было 5
   ////Serial.println(distance);
   digitalWrite(9, LOW);
   digitalWrite(10, HIGH);
-  analogWrite(11, N);
+  analogWrite(11, N_nazad);
   digitalWrite(7, HIGH);
   digitalWrite(8, LOW);
-  analogWrite(6, N);
+  analogWrite(6, N_nazad);
   
 //delay(100);
   int right_sensor_szadi_val = digitalRead(44);
@@ -735,14 +737,14 @@ while (distance>20)//(digitalRead(37)!=1)//было 5
     }
     analogWrite(6, 0);
     analogWrite(11, 0);
-     while ((digitalRead(43)!=color_of_line) &&(digitalRead(42)!=color_of_line))
+     while ((digitalRead(43)!=color_of_line) &&(digitalRead(42)!=color_of_line))  //$
      {
         digitalWrite(7, HIGH);
         digitalWrite(8, LOW);
-        analogWrite(6, 150);
+        analogWrite(6, N_nazad); //150
         digitalWrite(9, HIGH);
         digitalWrite(10, LOW);
-        analogWrite(11, 150);
+        analogWrite(11, N_nazad); //150
         datchik_num=3;
         //delay(50);
      } 
@@ -766,14 +768,14 @@ while (distance>20)//(digitalRead(37)!=1)//было 5
     }
     analogWrite(6, 0);
     analogWrite(11, 0);
-    while ((digitalRead(44)!=color_of_line)&&(digitalRead(45)!=color_of_line))  //19
+    while ((digitalRead(44)!=color_of_line)&&(digitalRead(45)!=color_of_line))  // $
     {
       digitalWrite(8, HIGH);
       digitalWrite(7, LOW);
-      analogWrite(6, 150);
+      analogWrite(6, N_nazad); //150
       digitalWrite(10, HIGH);
       digitalWrite(9, LOW);
-      analogWrite(11, 150);
+      analogWrite(11, N_nazad); //150
       datchik_num=4;
       //delay(50);
     } 
@@ -798,7 +800,7 @@ digitalWrite(8, HIGH);
 digitalWrite(7, LOW);
 analogWrite(6, 0);
 delay(10);
-lin_speed=40;
+//lin_speed=40;
 }
 
 
@@ -868,10 +870,10 @@ void go_front_to_stellazh() //проверить
  N=100;
  digitalWrite(8, HIGH);
 digitalWrite(7, LOW);
-analogWrite(6, N);  //N
+analogWrite(6, N_nazad);  //N
 digitalWrite(10, LOW);
 digitalWrite(9, HIGH);
-analogWrite(11, N); //N
+analogWrite(11, N_nazad); //N
 
 delay(100);
 }
@@ -902,10 +904,10 @@ if (right_sensor_3_val==color_of_line)
  N=100;
  digitalWrite(8, HIGH);
 digitalWrite(7, LOW);
-analogWrite(6, N);  //N
+analogWrite(6, N_nazad);  //N
 digitalWrite(10, LOW);
 digitalWrite(9, HIGH);
-analogWrite(11, N); //N
+analogWrite(11, N_nazad); //N
 
 delay(100);
 }
@@ -1699,19 +1701,19 @@ void receiveData(int byteCount) //byteCount нельзя удалить, так 
   if(recv_i==0)
   {
     mode=recv_buf[0];  
-    //Serial.println(mode);    
+    Serial.println(mode);    
   }
   
   if((recv_i==1)&&(mode==1))
   {
     
     size_arr=recv_buf[0];
-    //Serial.println(size_arr);
+    Serial.println(size_arr);
   }
   if ((recv_i>1)&&(mode==1))
   {
-    //Serial.print("arr_count   ");
-    //Serial.println(arr_count);
+    Serial.print("arr_count   ");
+    Serial.println(arr_count);
     if ((arr_count<=size_arr)&&(flag_counter==false))
     {
       //recv_buf[0]=Wire.read();

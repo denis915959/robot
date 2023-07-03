@@ -36,6 +36,7 @@ pinMode(12, OUTPUT);//платформа вверх/вниз
 pinMode(13, OUTPUT);//платформа вверх/вниз
 pinMode(A8, INPUT);//потенциометр
 pinMode(36, INPUT);//концевик лента
+pinMode(51, INPUT);//концевик поворот платформы
 Serial.begin(9600);
 
 }
@@ -43,7 +44,7 @@ void povorot_platformy()//поворот в БОЕВОЕ положение     
 {
   go_up();
   delay(200);
-  int t1, t2, t3, t4, t5, t, gran=1023;//975
+  int t1, t2, t3, t4, t5, t, gran=1023;//1023
   t=0;
   t1=analogRead(A8);
   delay(10);
@@ -53,7 +54,7 @@ void povorot_platformy()//поворот в БОЕВОЕ положение     
   delay(10);
   t4=analogRead(A8);
   delay(10);
-  while(t<gran)//(abs(t2-t1)<diap)
+  while((t<gran)&&(digitalRead(51)==0))//(abs(t2-t1)<diap)
   {
     t5=analogRead(A8);
     if(t1==t2==t3==t4==t5)
@@ -179,10 +180,10 @@ delay(1000);*/
 
 vozvrat_platformy();
 delay(1000);
-lenta_beret();
+/*lenta_beret();
 delay(1000);
-go_up();
-//povorot_platformy();
+go_up();*/
+povorot_platformy();
 delay(1000);
 
 
