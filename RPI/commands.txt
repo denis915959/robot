@@ -1,0 +1,22 @@
+python3 --version
+
+# установка i2c
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install i2c-tools
+
+# установка pip3
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install python3-pip
+
+# активация i2c
+sudo raspi-config
+--> interface option --> i2c --> yes 
+sudo reboot
+
+# установка библиотеки для pca9685
+pip3 install adafruit-circuitpython-pca9685
+
+# установка paho-mqtt
+pip3 install paho-mqtt
