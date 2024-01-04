@@ -16,7 +16,7 @@ sudo raspi-config
 sudo reboot
 
 # установка библиотеки для pca9685
-pip3 install adafruit-circuitpython-pca9685
+sudo pip3 install adafruit-circuitpython-pca9685
 
 # установка paho-mqtt
 pip3 install paho-mqtt

@@ -8,10 +8,12 @@ class Servo:
         self.kit.frequency = 50  #устаеавливаем частоту ШИМ 50 Hz
         self.left_start=5 # левая стартовая позиция (датчик смотрит прямо по курсу робота)
         self.right_start=155 # правая стартовая позиция (датчик смотрит прямо по курсу робота)
-        self.min_step=7 # 6-7
+        self.min_step=5 # 7
+        self.max_angle = int(180/self.coefficient_angle)
         
 
     def rotate_left(self,angle): # поворот влево на угол (относительно 0)
+        angle = self.coefficient_angle*angle
         if((angle>180)or(angle<0)):
             return(False)
         else:
@@ -19,6 +21,7 @@ class Servo:
             return(True)
             
     def rotate_right(self,angle): # поворот вправо на угол (относительно 0)
+        angle = self.coefficient_angle*angle
         if((angle>180)or(angle<0)):
             return(False)
         else:
@@ -32,20 +35,24 @@ class Servo:
         self.kit.servo[15].angle = self.right_start
         
     def close(self): # вызывать после завершения работы с объектом класса Servo
+        time.sleep(1)
         self.kit.servo[14].angle = None
         self.kit.servo[15].angle = None
         
     def get_min_step(self): # узнать минимальный размер шага сервопривода 
         return(self.min_step)
+        
+    def get_max_angle(self):
+        return(self.max_angle)
     
 
 
-servo = Servo()
-servo.rotate_right(155)
+"""servo = Servo()
+servo.rotate_right(20)
 time.sleep(1)
-servo.rotate_right(161)
+servo.rotate_right(20)
 time.sleep(2)
-servo.close()
+servo.close()"""
 
 
 
