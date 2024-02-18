@@ -1067,11 +1067,11 @@ digitalWrite(7, LOW);
 digitalWrite(9, LOW);
 digitalWrite(10, LOW);
 delay(5);
-
+//flag=true;
 int dist=0;
 if (flag==true)
 {
-
+  //flag=false;
 
   //Serial.println(pered.read());
   dist=pered.read();

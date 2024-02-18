@@ -11,7 +11,7 @@ void setup() {  // порт 5, если провод слева
 }
 
 void loop() {
-  int N=83;
+  int N=100;
   // put your main code here, to run repeatedly:
   digitalWrite(8, HIGH);
   digitalWrite(7, LOW);

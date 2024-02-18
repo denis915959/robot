@@ -2,7 +2,7 @@ import RPi.GPIO as GPIO
 import time
 GPIO.setmode(GPIO.BCM)
 
-class LM393: 
+class LM393:
     def __init__(self):
         self.delay_speed=1 # время между прерываниями
         self.k_right=0.49 # 0.48 коэффициэнт, необходимый для точного определения скорости (так как при всех верных вводных данных показания от истины почему-то отличаются на этот коэффициэнт)
@@ -37,7 +37,6 @@ class LM393:
         GPIO.add_event_detect(self.lm393_2, GPIO.RISING, callback=lambda *args: self.calculate_speed(2), bouncetime=self.delay_speed)
         GPIO.add_event_detect(self.lm393_3, GPIO.RISING, callback=lambda *args: self.calculate_speed(3), bouncetime=self.delay_speed)
         GPIO.add_event_detect(self.lm393_4, GPIO.RISING, callback=lambda *args: self.calculate_speed(4), bouncetime=self.delay_speed)
-        self.tmp = 0
         
         
     def calculate_speed(self, channel):
@@ -60,7 +59,7 @@ class LM393:
         self.right_S=0
         time.sleep(self.delay_between_read_speed) # для того, чтобы первая считанная скорость была корретной 0.25?????????
             
-    def get_speed_right(self): # среднее по 2 правым датчикам, mm/sec
+    def get_speed_right(self): # среднее по 2 правым датчикам
         tmp_speed_count1=0
         tmp_speed_count2=0
         tmp_speed_count1=self.speed_count1
@@ -74,9 +73,12 @@ class LM393:
         speed1 = (tmp_speed_count1 * (7 /(44*40))*self.k_right *207)/time_interval1 # независимо рассчитываем 2 скорости
         speed2 = (tmp_speed_count2 * (7 /(44*40))*self.k_right *207)/time_interval2
         speed = (speed1+speed2)/2
+        
+        #print("1 = ", speed1)
+        #print("2 = ", speed2)
         return(speed)
     
-    def get_speed_left(self): # среднее по 2 левым датчикам, mm/sec
+    def get_speed_left(self): # среднее по 2 левым датчикам
         tmp_speed_count3=0
         tmp_speed_count4=0
         tmp_speed_count3=self.speed_count3
@@ -90,13 +92,13 @@ class LM393:
         speed1 = (tmp_speed_count3 * (7 /(44*40))*self.k_left *207)/time_interval3 # независимо рассчитываем 2 скорости
         speed2 = (tmp_speed_count4 * (7 /(44*40))*self.k_left *207)/time_interval4
         speed = (speed1+speed2)/2
+        
+        #print("1 = ", speed1)
+        #print("2 = ", speed2)
         return(speed)
         
     def get_delay(self):
         return(self.delay_between_read_speed)
-
-    def set_delay(self, t):
-        self.delay_between_read_speed = t
 
     """def calculate_speed(self): # error in this function! это пока так, но это не работает. эта серия функций будет создаваться под конкретную задачу
         speed = self.get_speed_left()
@@ -113,7 +115,7 @@ class LM393:
     
         
 
-"""try:
+try:
     lm393 = LM393()
     lm393.start_with_delay()
     S_l = 0
@@ -131,8 +133,8 @@ class LM393:
         print("S_r = ", S_r)
 
 except KeyboardInterrupt:
-    GPIO.cleanup()"""
-    
+    GPIO.cleanup()
+
 
 
 
