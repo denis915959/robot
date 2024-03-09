@@ -33,6 +33,7 @@ class Motor:
         self.speed_to_distance = 100 # оптимальная скорость для движения по прямой при 11.6-11.7 вольтах
         self.delta_to_distance = 8 # запас на остановку (в миллиметрах)
         self.delay_to_distance = 0.02
+        self.stop()
         
     def set_speed_go_pered_left(self, speed):  #, delay=-1): # speed 0-255, только для левого (движение вперед), правую сторону не трогаем, так как подразумевается, что она будет вызвана рядом (это парные функции)
         self.activate_rpi_driver()
@@ -74,7 +75,7 @@ class Motor:
                 time.sleep(delay)
                 self.stop()"""
         
-    def rotate_right(self, speed, delay=-1): # 0-255, разворот вправо
+    def rotate_right(self, speed, delay=-1, non_stop=False): # 0-255, разворот вправо
         self.activate_rpi_driver()
         speed = int(speed/2.55)
         GPIO.output(self.pin9, GPIO.HIGH)
@@ -85,9 +86,10 @@ class Motor:
         self.right_motor_pwm.ChangeDutyCycle(speed)
         if(delay!=-1):
                 time.sleep(delay)
-                self.stop()
+                if(non_stop==False):
+                        self.stop()
         
-    def rotate_left(self, speed, delay=-1): # 0-255, разворот влево
+    def rotate_left(self, speed, delay=-1, non_stop=False): # 0-255, разворот влево
         self.activate_rpi_driver()
         speed = int(speed/2.55)
         GPIO.output(self.pin10, GPIO.HIGH)
@@ -98,9 +100,10 @@ class Motor:
         self.right_motor_pwm.ChangeDutyCycle(speed)
         if(delay!=-1):
                 time.sleep(delay)
-                self.stop()
+                if(non_stop==False):
+                        self.stop()
         
-    def go_pered(self, speed, delay=-1): # движение вперед
+    def go_pered(self, speed, delay=-1, non_stop=False): # движение вперед
         self.activate_rpi_driver()
         speed = int(speed/2.55)
         GPIO.output(self.pin9, GPIO.HIGH)
@@ -111,9 +114,10 @@ class Motor:
         self.right_motor_pwm.ChangeDutyCycle(speed)
         if(delay!=-1):
                 time.sleep(delay)
-                self.stop()
+                if(non_stop==False):
+                        self.stop()
         
-    def go_back(self, speed, delay=-1): # движение назад
+    def go_back(self, speed, delay=-1, non_stop=False): # движение назад
         self.activate_rpi_driver()
         speed = int(speed/2.55)
         GPIO.output(self.pin10, GPIO.HIGH)
@@ -124,9 +128,10 @@ class Motor:
         self.right_motor_pwm.ChangeDutyCycle(speed)
         if(delay!=-1):
                 time.sleep(delay)
-                self.stop()
+                if(non_stop==False):
+                        self.stop()
                 
-    def go_back_to_distance(self, distance, lm393): # +/- 0.5 cm
+    def go_back_to_distance(self, distance, lm393): # distance in cm, +/- 0.5 cm
         self.activate_rpi_driver()
         distance = distance*10 - self.delta_to_distance
         speed = int(self.speed_to_distance/2.55)
@@ -135,6 +140,33 @@ class Motor:
         self.left_motor_pwm.ChangeDutyCycle(speed)
         GPIO.output(self.pin7, GPIO.HIGH)
         GPIO.output(self.pin8, GPIO.LOW)
+        self.right_motor_pwm.ChangeDutyCycle(speed)
+        lm393.start_with_delay()
+        speed_l = lm393.get_speed_left()
+        speed_r = lm393.get_speed_right()
+        S = 0
+        tmp_time = lm393.get_delay()
+        delay_between_read_speed=self.delay_to_distance
+        lm393.set_delay(delay_between_read_speed)
+        while (S<distance):
+            time.sleep(delay_between_read_speed)
+            speed_l = lm393.get_speed_left()
+            speed_r = lm393.get_speed_right()
+            S_l = speed_l*delay_between_read_speed
+            S_r = speed_r*delay_between_read_speed
+            S = S + ((S_l + S_r)/2)
+        lm393.set_delay(tmp_time)
+        self.stop()
+        
+    def go_front_to_distance(self, distance, lm393): # distance in cm, +/- 0.5 cm
+        self.activate_rpi_driver()
+        distance = distance*10 - self.delta_to_distance
+        speed = int(130/2.55) #int(self.speed_to_distance/2.55)
+        GPIO.output(self.pin9, GPIO.HIGH)
+        GPIO.output(self.pin10, GPIO.LOW)
+        self.left_motor_pwm.ChangeDutyCycle(speed)
+        GPIO.output(self.pin8, GPIO.HIGH)
+        GPIO.output(self.pin7, GPIO.LOW)
         self.right_motor_pwm.ChangeDutyCycle(speed)
         lm393.start_with_delay()
         speed_l = lm393.get_speed_left()
@@ -208,9 +240,9 @@ class Motor:
         
         
 """m = Motor()
-m.rotate_left(200, 0.5) #copy.copy(lm393)) - через copy Нельзя, не будет работать!
-time.sleep(5)
-m.rotate_right(200, 0.5)
+lm393 = LM393.LM393()
+distance = 16
+m.go_front_to_distance(distance, lm393)
 m.close()"""
 
 
