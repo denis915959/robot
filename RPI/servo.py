@@ -51,15 +51,15 @@ class Servo:
         return(True)
             
     def left_to_start_position(self): # установить левый серво в стартовое положение, датчик смотрит прямо по курсу робота!
-        self.rotate_left(self.left_start)
+        self.rotate_front_left(self.left_start)
         
     def right_to_start_position(self): # установить правый серво в стартовое положение, датчик смотрит прямо по курсу робота!
-        self. rotate_right(self.right_start)
+        self. rotate_front_right(self.right_start)
         
-    def back_right_to_start_position(self): # установить правый серво в стартовое положение, датчик смотрит vbok!
+    def back_right_to_start_position(self): # установить правый серво в стартовое положение, датчик смотрит nazad!
         self.rotate_back_right(self.back_right_start)
         
-    def back_left_to_start_position(self): # установить правый серво в стартовое положение, датчик смотрит vbok!
+    def back_left_to_start_position(self): # установить правый серво в стартовое положение, датчик смотрит nazad!
         self.rotate_back_left(self.back_left_start)
         
     def front_left_vbok(self):
