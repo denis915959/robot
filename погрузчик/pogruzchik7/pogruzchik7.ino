@@ -1688,7 +1688,7 @@ void loop() {
 
 
 
-
+// отрицательные сообщения не принимаются!
 void receiveData(int byteCount) //byteCount нельзя удалить, так как обработчик должен принимать один параметр типа int (так написано в документации)
 {
   int recv_buf[1]; //так как обработчик вызывается при поступлении КАЖДОГО числа, то recv_buf - "посредник" для сохранения нем принятых данных
@@ -1701,13 +1701,14 @@ void receiveData(int byteCount) //byteCount нельзя удалить, так 
   if(recv_i==0)
   {
     mode=recv_buf[0];  
+    Serial.print("mode   ");
     Serial.println(mode);    
   }
   
   if((recv_i==1)&&(mode==1))
   {
-    
     size_arr=recv_buf[0];
+    Serial.print("size_arr = ");
     Serial.println(size_arr);
   }
   if ((recv_i>1)&&(mode==1))
@@ -1728,6 +1729,19 @@ void receiveData(int byteCount) //byteCount нельзя удалить, так 
       arr_count++;
     }
   }
+  if((recv_i==1)&&(mode==2)) // новй блок
+  {
+    int action = int(recv_buf[0]); // если типу int не привести, то ничего не будет работать
+    if(action == 2)
+    {
+        Serial.println("rotate right");
+    }
+    if(action == 1)
+    {
+        Serial.println("rotate left");
+    }
+  }
+
   //если все верно раотает (проверить в т.ч при mode = 2), то удалить то, что снизу
   /*if((recv_i==0)||(recv_i==1))
   {

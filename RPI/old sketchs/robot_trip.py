@@ -11,7 +11,7 @@ class robot_path_node:
 		self.action=action1
 		self.counter=counter1
 
-def writenumber(num):
+def writenumber_i2c(num):
 	bus.write_byte(SLAVE_ADDRESS, int(num))
 def write_array(a, b, c, d):
 	bus.write_i2c_block_data(SLAVE_ADDRESS, a, [b, c, d])
@@ -23,10 +23,10 @@ def mode_1(robot_action, path):
 	sz_path=len(robot_action)
 	result = [] # результат работы mode1
 
-	writenumber(sz_path) #send robot_action to robot
+	writenumber_i2c(sz_path) #send robot_action to robot
 	for i in range(0, sz_path):
-		writenumber(robot_action[i].action)
-		writenumber(robot_action[i].counter)
+		writenumber_i2c(robot_action[i].action)
+		writenumber_i2c(robot_action[i].counter)
 		print(robot_action[i].action, "  ", robot_action[i].counter)
 
 
@@ -80,7 +80,7 @@ def mode_1(robot_action, path):
 
 
 
-mode=1
+mode=2
 
 if(mode==1): # эта штука для тестов, mode1 ,будет вызываться в robot_trip
 	robot_action=[]
@@ -97,9 +97,14 @@ if(mode==1): # эта штука для тестов, mode1 ,будет вызы
 	path=[3, 2, 1]"""
 
 	# эти 2 строчки скопировать в robot_trip
-	writenumber(mode)
+	writenumber_i2c(mode)
 	result = mode_1(copy.deepcopy(robot_action), path)
 	print(result)
-	
+if(mode==2):
+	writenumber_i2c(mode)
+	# движение на объезд препятствие. Здесь вместо него таймер
+	time.sleep(5)
+	#writenumber_i2c(-1) # -1 - команда на захват линии с поворотом влево
+	writenumber_i2c(-2) # -2 - команда на захват линии с поворотом вправо
         
 #sudo i2cdetect -y 1
