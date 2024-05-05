@@ -18,7 +18,8 @@ bool start=false; //если true, то массив принят до конц�
 int mode=-1; //номер режима раьоты робота, 1 - к ящикам, 2 - объезд препятствия
 int j_send=0; //номер итерации цикла по count, на котором препятствие возникло. нужно для нахождения номера последнего пройденного перекреска
 int number_send_message_3=0;
-
+bool rotate_answer_flag = false;
+int counter_answer_flag = 0;
 
 
 
@@ -170,7 +171,7 @@ void setup()
   pinMode(13, OUTPUT);//платформа вверх/вниз
   pinMode(A8, INPUT);//потенциометр
   pinMode(36, INPUT);//концевик лента
-  Serial.begin(9600);   // настроить последовательный порт для вывода
+  //Serial.begin(9600);   // настроить последовательный порт для вывода
   pinMode(51, INPUT);//концевик поворот платформы
   Wire.begin(0x20/*SLAVE_ADDRESS*/);         // подключиться к шине i2c (адрес для мастера не обязателен)
   Wire.onReceive(receiveData);
@@ -1264,7 +1265,7 @@ void loop() {
             // вывод в последовательный порт
             /*Serial.print(" B= ");
             Serial.println(freq_blue);*/
-            Serial.println(tcs230_counter);
+            //Serial.println(tcs230_counter);
             if ((tcs230_counter>=tcs230_delay)&&(35<=freq_red)&&(100<=freq_green)&&(80<=freq_blue)&&(70>=freq_red)&&(145>=freq_green)&&(110>=freq_blue))//надо ли 145 в green? //((55<=freq_red)&&(120<=freq_green)&&(93<=freq_blue)&&(67>=freq_red)&&(140>=freq_green)&&(107>=freq_blue))//((18<=freq_red)&&(30<=freq_green)&&(25<=freq_blue)&&(25>=freq_red)&&(47>=freq_green)&&(40>=freq_blue))
             {//по идее, тут switch идет
               red=true;
@@ -1701,20 +1702,20 @@ void receiveData(int byteCount) //byteCount нельзя удалить, так 
   if(recv_i==0)
   {
     mode=recv_buf[0];  
-    Serial.print("mode   ");
-    Serial.println(mode);    
+   // Serial.print("mode   ");
+   // Serial.println(mode);    
   }
   
   if((recv_i==1)&&(mode==1))
   {
     size_arr=recv_buf[0];
-    Serial.print("size_arr = ");
-    Serial.println(size_arr);
+   // Serial.print("size_arr = ");
+   // Serial.println(size_arr);
   }
   if ((recv_i>1)&&(mode==1))
   {
-    Serial.print("arr_count   ");
-    Serial.println(arr_count);
+   // Serial.print("arr_count   ");
+   // Serial.println(arr_count);
     if ((arr_count<=size_arr)&&(flag_counter==false))
     {
       //recv_buf[0]=Wire.read();
@@ -1734,12 +1735,17 @@ void receiveData(int byteCount) //byteCount нельзя удалить, так 
     int action = int(recv_buf[0]); // если типу int не привести, то ничего не будет работать
     if(action == 2)
     {
-        Serial.println("rotate right");
+       // Serial.println("rotate right");
+        rotate_right();
+        rotate_answer_flag = true;
     }
     if(action == 1)
     {
-        Serial.println("rotate left");
+       // Serial.println("rotate left");
+        rotate_left();
+        rotate_answer_flag = true;
     }
+    recv_i=-1; // так как дальше будет i_recv++
   }
 
   //если все верно раотает (проверить в т.ч при mode = 2), то удалить то, что снизу
@@ -1774,7 +1780,7 @@ void receiveData(int byteCount) //byteCount нельзя удалить, так 
       //Serial.println("start!");
       start=true;
     }
-      
+    recv_i=-1; // этой строки не было до 6.05.24
     //if (mode==2), то mode2_flag =true {...............}
   }
   recv_i++;
@@ -1782,20 +1788,35 @@ void receiveData(int byteCount) //byteCount нельзя удалить, так 
 
 void sendData()
 {
-  if(number_send_message_3==0) //начало пакета 
+  /*if(rotate_answer_flag == true)
   {
-    char message=255;
+    char message=120;
     Wire.write(message);
+    
+    counter_answer_flag++;
+    Serial.print("counter_answer_flag = ");
+    Serial.println(counter_answer_flag);
+    if(counter_answer_flag >= 1)
+      rotate_answer_flag = false;
   }
-  if(number_send_message_3==1)
-  {
-    char message=j_send;
-    Wire.write(message); 
-  }
-  if(number_send_message_3==2) //status отправляется последним, чтобы распберри успела считать j_send
-  {
-    char message=status;
-    Wire.write(message); 
-  }
-  number_send_message_3=(number_send_message_3+1)%3;
+  else{*/
+   // Serial.println("send else");
+    if(number_send_message_3==0) //начало пакета 
+    {
+      char message=255;
+      Wire.write(message);
+    }
+    if(number_send_message_3==1)
+    {
+      char message=j_send;
+      Wire.write(message); 
+    }
+    if(number_send_message_3==2) //status отправляется последним, чтобы распберри успела считать j_send
+    {
+      char message=status;
+      Wire.write(message); 
+    }
+    number_send_message_3=(number_send_message_3+1)%3;
+  //}
+
 }
