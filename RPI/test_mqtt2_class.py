@@ -1,10 +1,15 @@
 # python test_mqtt2_class.txt
 # Рабочая версия кода для Распберри!!!
 
+import RPi.GPIO as GPIO # delete!
+GPIO.setmode(GPIO.BCM)  # delete!
+GPIO.setwarnings(False) # delete!
+
 import time
 import random # генерируем id для клиента
 from paho.mqtt import client as mqtt_client
 from operator import length_hint
+import L298D
 
 class robot_path_node:
 	def __init__(self, action1, counter1):
@@ -95,14 +100,17 @@ def mode_1(robot_action):
 	return(result)
 
 def robot_trip(robot_action):
-	result = [] # результат работы robot_trip
-	result = mode_1(robot_action)
-	if(result[0]==0):
-		print("barrier!")
-		#вызов result[0]=mode_2()
-	if(result[0]==1):
-		print("success!")
-	return(result)
+    result = [] # результат работы robot_trip
+    # vernut v rabotu this block
+    """result = mode_1(robot_action)  
+    if(result[0]==0):
+            print("barrier!")
+            #вызов result[0]=mode_2()
+    if(result[0]==1):
+            print("success!")
+    return(result)"""
+    result.append(0)
+    return(result)
         
 
 class MQTT_RPi:
@@ -116,6 +124,8 @@ class MQTT_RPi:
         self.password = 'public'
         self.client_id = f'python-mqtt-{random.randint(0, 100)}'
         self.connect_counter=0
+        self.tcrt5000 = 18
+        self.m = L298D.Motor()
 
     def connect_mqtt(self) -> mqtt_client:
         def on_connect(client, userdata, flags, rc):
@@ -214,12 +224,14 @@ class MQTT_RPi:
         time.sleep(2)
         print("robot is work!")"""
     
+# после старта робота он не посылает сообщение о препятствии, пока его не обьедет
+        #вместо этого блока должна быть функция robot_trip !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # n2 - количество усчпешно взятых товаров на момент отправки сообщения, n3==1 - препятствие слева, n4==1 - препятствие справа!!
         #result_trip=[1, -1, -1, -1, -1]   #номер элементов в path! 
         #result_trip=[0, 2, 3, -1, -1, 3, 4] # if 6
 
         #result_trip=[0, 2, 3, -1, -1]
-        #result_trip=[0, 1, 2, -1, -1]
+        result_trip=[0, 0, 1, -1, -1]
 
         #result_trip=[0, -1, 0, 1, 0]
         #result_trip=[1, 0, 1, -1, -1, 1, 2]
@@ -234,13 +246,38 @@ class MQTT_RPi:
         if((result_trip[0]==0)and(result_trip[1]==-1)):
             mode = 2
             type_barrier = 2
+        
         if((mode == 2)and(type_barrier == 1)):
             result_obiezd = [] # в этом месте вызов функции объезда препятствия! на выхрод массив из 2 элементов: 1) 1/0 - true/false 2)0/1/2 - нет поворота/влево/вправо
-            if(result_obiezd==True):
+            
+            
+            tcrt5000 = 18 # this blok perenesti v blok obiezda prepyatstvia!!
+            while(1):
+                speed = 120
+                self.m.go_pered(speed, 0.05)
+                if(GPIO.input(self.tcrt5000) == 0):
+                        break
+                self.m.stop()
+            result_obiezd_flag = True  # delete!!!
+            result_obiezd.append(2)    # delete!!!
+            result_obiezd.append(2)    # delete!!!   1- rotate_left, 2 - rotate_right
+            
+            
+            if(result_obiezd_flag==True):
                 if(result_obiezd[1]>0): # т.е если удалось объехать препятствие
+                    self.m.activate_arduino_driver()
+                    time.sleep(1)
                     writenumber_i2c(mode)
                     time.sleep(1)
                     writenumber_i2c(result_obiezd[1]) # 1 - команда на захват линии с поворотом влево
+                    """while(True):
+                        recv_message=readnumber() # otvet poluchit
+                        print("recv_message = ", recv_message)
+                        if(recv_message==120):
+                            break"""
+                    time.sleep(10) # inache poka ne rabotaet
+                    self.m.activate_rpi_driver()
+                    print("after receive")
                 result_trip[0]=1
             else:
                 result_trip[0]=0

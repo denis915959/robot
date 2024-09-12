@@ -34,6 +34,7 @@ int N_z=120;//230
 
 //int t1=100;//движение к ящику
 int N=80;//было 100, это на что то влияет??? скорость движения по линии, а также скорость приближения к стеллажу
+int const_dist_barrier = 4; // еси расстояние меньше, то препяьтствие на пути   //7
 //int n2=140;//поворот к стеллажу, на свинцовом аккуме 150
 //int t_w=20;
 
@@ -86,7 +87,7 @@ int line_true_level2=50;
 int line_true_2=50; //было 300
 
 
-int n=200;//скорость разворота до 1 контура, было 150
+int n=230;//скорость разворота до 1 контура, было 200
 
 bool key;
 
@@ -94,20 +95,21 @@ bool key;
 
 //ЧИСТОВОЙ БЛОК ПЕРЕМЕННЫХ
 int t_operezhenie=0;//(200)  доворот после срабатывания датчика
-const int n_rt=220;//15-200, скорость поворота для функций типа rotate
+const int n_rt_180=255;//220, скорость поворота для функций типа rotate
+const int n_rt=250; // 220
 const int t=1200;//время поворота без датчика, 1500
 const int tcs230_delay=1000;//1000 - достаточно даже при напряжении 11,4 вольта, (на 1500 мертвая зона 18,5 см при 11,6 вольта)
 int tcs230_counter=tcs230_delay;
 int line_true_trassa=50;//только для движения вдоль стеллажей!!!   (было 200, все работало)
 int line_true_zahvat=200;
 int tmp_nizhny_floor=2800;//для нижнего этажа, должно быть чуть выше, чем значение tmp из-за особенности регулировки концевиков
-int tmp_verhny_floor=5000;//для верхнего этажа, было 5000
+int delay_verhny_floor=5000;//для верхнего этажа, было 5000
 bool red=false;
 int kacheli_delay=300;  //когда возникает ситуаця, что линию видят только второй контур, возникают "качели". этот таймер преодолевает это расстояние
 int delay_red=200;  //больше нельзя, т.к у задних датчиков возможна ситуация, что на линии сраьотают два одновременн (редко, но бывает). поэтому задержка небольшая должна быть
 const int t_180=3200;//время поворота на 180 без датчика. 
 const int t_180_old=1500;
-const int N_nazad=185;
+const int N_nazad=220;  //185 (07^06^2024)
 
 // Пины подключения датчика цвета
 int pinS0=46;
@@ -187,7 +189,7 @@ void povorot_platformy()//поворот в БОЕВОЕ положение     
 {
   go_up();
   delay(200);
-  int t1, t2, t3, t4, t5, t, gran=995;//1005
+  int t1, t2, t3, t4, t5, t, gran=1024;//995
   t=0;
   t1=analogRead(A8);
   delay(10);
@@ -225,7 +227,7 @@ void vozvrat_platformy()//в положение ПОХОДНОЕ       //ВЕР�
 {
   go_up();
   delay(200);
-  int t1, t2, t3, t4, t5, t, gran=30;//5 
+  int t1, t2, t3, t4, t5, t, gran=55;//5 
   t=1000;
   t1=analogRead(A8);
   delay(10);
@@ -360,7 +362,29 @@ void rotate_left_stel()
 }
 
 
-
+void rotate_left_mode_2()
+{
+  digitalWrite(7, HIGH);
+  digitalWrite(8, LOW);
+  analogWrite(6, n_rt);
+  digitalWrite(9, HIGH);
+  digitalWrite(10, LOW);
+  analogWrite(11, n_rt);
+  delay(t);//конец поворота по таймеру    
+  while ((digitalRead(43)!=color_of_line)&&(digitalRead(26)!=color_of_line))//поворот по датчику
+  {
+    digitalWrite(7, HIGH);
+    digitalWrite(8, LOW);
+    analogWrite(6, n_rt);
+    digitalWrite(9, HIGH);
+    digitalWrite(10, LOW);
+    analogWrite(11, n_rt);
+    delay(20);
+  }//конец поворота по датчику
+  analogWrite(6, 0);
+  analogWrite(11, 0);
+  delay(10);
+}
 
 
 
@@ -391,6 +415,32 @@ void rotate_right()
   delay(10);
 }
 
+
+void rotate_right_mode_2()//поворот вправо для 2 режима
+{
+  digitalWrite(8, HIGH);
+  digitalWrite(7, LOW);
+  analogWrite(6, n_rt);
+  digitalWrite(10, HIGH);
+  digitalWrite(9, LOW);
+  analogWrite(11, n_rt);
+  delay(t);//конец поворота по таймеру
+//  servo1.write(rotate_v);
+  while ((digitalRead(44)!=color_of_line)&&(digitalRead(27)!=color_of_line))//поворот по датчику
+  {
+    digitalWrite(8, HIGH);
+    digitalWrite(7, LOW);
+    analogWrite(6, n_rt);
+    digitalWrite(10, HIGH);
+    digitalWrite(9, LOW);
+    analogWrite(11, n_rt);
+    delay(20);
+    // servo1.write(rotate_v);
+  }//конец поворота по датчику
+  analogWrite(6, 0);
+  analogWrite(11, 0);
+  delay(10);
+}
 
 
 void rotate_right_stel()//поворот вправо
@@ -425,23 +475,22 @@ void rotate_right_stel()//поворот вправо
 
 void rotate_right_180_stel()
 {
-  
   digitalWrite(8, HIGH);
   digitalWrite(7, LOW);
-  analogWrite(6, n_rt);
+  analogWrite(6, n_rt_180);
   digitalWrite(10, HIGH);
   digitalWrite(9, LOW);
-  analogWrite(11, n_rt);
+  analogWrite(11, n_rt_180);
   delay(t_180_old);//конец поворота по таймеру
 //  servo1.write(rotate_v);
   while (digitalRead(44)!=color_of_line)//поворот по датчику
   {
     digitalWrite(8, HIGH);
     digitalWrite(7, LOW);
-    analogWrite(6, n_rt);
+    analogWrite(6, n_rt_180);
     digitalWrite(10, HIGH);
     digitalWrite(9, LOW);
-    analogWrite(11, n_rt);
+    analogWrite(11, n_rt_180);
     //delay(20);
     // servo1.write(rotate_v);
   }//конец поворота по датчику
@@ -450,10 +499,10 @@ void rotate_right_180_stel()
   {
     digitalWrite(8, HIGH);
     digitalWrite(7, LOW);
-    analogWrite(6, n_rt);
+    analogWrite(6, n_rt_180);
     digitalWrite(10, HIGH);
     digitalWrite(9, LOW);
-    analogWrite(11, n_rt);
+    analogWrite(11, n_rt_180);
     delay(20);
     // servo1.write(rotate_v);
   }//конец поворота по датчику
@@ -471,10 +520,10 @@ void rotate_right_180()
   
   digitalWrite(8, HIGH);
   digitalWrite(7, LOW);
-  analogWrite(6, n_rt);
+  analogWrite(6, n_rt_180);
   digitalWrite(10, HIGH);
   digitalWrite(9, LOW);
-  analogWrite(11, n_rt);
+  analogWrite(11, n_rt_180);
   delay(t_180);//конец поворота по таймеру
   /*analogWrite(6, 0);
   analogWrite(11, 0);
@@ -483,10 +532,10 @@ void rotate_right_180()
   {
     digitalWrite(8, HIGH);
     digitalWrite(7, LOW);
-    analogWrite(6, n_rt);
+    analogWrite(6, n_rt_180);
     digitalWrite(10, HIGH);
     digitalWrite(9, LOW);
-    analogWrite(11, n_rt);
+    analogWrite(11, n_rt_180);
     delay(20);
     // servo1.write(rotate_v);
   }//конец поворота по датчику
@@ -513,7 +562,7 @@ void go_back_1() //перед захватом ящика //проверить
 
 //Serial.println(distance);
 
-while (distance>13)     // было 11. Возможно, следует сделать 12
+while (distance>9)     // было 13
 {
   ////Serial.println(distance);
   digitalWrite(9, LOW);
@@ -1145,7 +1194,7 @@ void zahvat_from_floor_2()//захват со второго яруса
     delay(100);//конец подъема
     digitalWrite(12, HIGH);
     digitalWrite(13, LOW);
-    delay(tmp_verhny_floor);
+    delay(delay_verhny_floor);
     digitalWrite(12, LOW);
     digitalWrite(13, LOW);
     go_front_to_stellazh();
@@ -1188,7 +1237,6 @@ void zahvat_from_floor_2()//захват со второго яруса
 void loop() {
   if(start==true)//пришел массив с rpi
   {//здесь switch, циклы массива и т.д
-   
     bool first_box=false;
     vozvrat_platformy(); //при отключенном питании идет блокирование
     //Serial.println("GO!");
@@ -1204,6 +1252,7 @@ void loop() {
     }*/
     for (int i=0; i<size_arr; i++)
     {
+      // Serial.println("k 3");
       /////Serial.print("act = ");
       /////Serial.println(action[i]);
       if( status <(size_arr-1))//убрать?
@@ -1211,7 +1260,7 @@ void loop() {
         ////Serial.println("barrier");
         break;
       }
-      if(dist<=7)
+      if(dist<= const_dist_barrier)
         break;
       for(int j=0; j<counter[i]; j++)
       {
@@ -1223,7 +1272,7 @@ void loop() {
           Serial.println("barrier");
           break;
         }*/
-        if(dist<=7)
+        if(dist<= const_dist_barrier)
           break;
         digitalWrite(8, LOW);
         digitalWrite(7, LOW);
@@ -1234,9 +1283,8 @@ void loop() {
         {
           //Serial.println(pered.read());
           dist=pered.read();
-          while (dist>7) 
+          while (dist> const_dist_barrier) 
           {
-
             int freq_red=0;
             int freq_green=0;
             int freq_blue=0;
@@ -1702,20 +1750,20 @@ void receiveData(int byteCount) //byteCount нельзя удалить, так 
   if(recv_i==0)
   {
     mode=recv_buf[0];  
-   // Serial.print("mode   ");
-   // Serial.println(mode);    
+    //Serial.print("mode   ");
+    //Serial.println(mode);    
   }
   
   if((recv_i==1)&&(mode==1))
   {
     size_arr=recv_buf[0];
-   // Serial.print("size_arr = ");
-   // Serial.println(size_arr);
+    //Serial.print("size_arr = ");
+    //Serial.println(size_arr);
   }
   if ((recv_i>1)&&(mode==1))
   {
-   // Serial.print("arr_count   ");
-   // Serial.println(arr_count);
+    //Serial.print("arr_count   ");
+    //Serial.println(arr_count);
     if ((arr_count<=size_arr)&&(flag_counter==false))
     {
       //recv_buf[0]=Wire.read();
@@ -1736,13 +1784,15 @@ void receiveData(int byteCount) //byteCount нельзя удалить, так 
     if(action == 2)
     {
        // Serial.println("rotate right");
-        rotate_right();
+        //rotate_right();
+        rotate_right_mode_2();
         rotate_answer_flag = true;
     }
     if(action == 1)
     {
        // Serial.println("rotate left");
-        rotate_left();
+        //rotate_left();
+        rotate_left_mode_2();
         rotate_answer_flag = true;
     }
     recv_i=-1; // так как дальше будет i_recv++
@@ -1800,7 +1850,7 @@ void sendData()
       rotate_answer_flag = false;
   }
   else{*/
-   // Serial.println("send else");
+    //Serial.println("send else");
     if(number_send_message_3==0) //начало пакета 
     {
       char message=255;

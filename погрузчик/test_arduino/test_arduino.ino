@@ -1,6 +1,6 @@
-#define n 51
+#define n 3
 
-#define type 0//0-digitalRead, 1- analog_read, 2- digitalWrite, 3- analogWrite
+#define type 0 //0-digitalRead, 1- analog_read, 2- digitalWrite, 3- analogWrite
 void setup() {
   // put your setup code here, to run once:
   if ((type==3)||(type==2))

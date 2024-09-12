@@ -5,16 +5,23 @@ void setup() {
   pinMode(32, INPUT);
 }
 
+void go_down()//ВЕРНО
+{
+   while (digitalRead(32)!=1)//подъем вверх
+  {
+     digitalWrite(12, HIGH);
+     digitalWrite(13, LOW);
+     ////Serial.println(1);
+     delay(50);
+  }
+  digitalWrite(13, LOW);
+  digitalWrite(12, LOW);
+}
+
+
 void loop() {
   // put your main code here, to run repeatedly:
 
-  while (digitalRead(32)==1)
-  {
-    digitalWrite(12, HIGH); //все верно выставлено для движения вниз!!!!!!!!!!!!!!!!!!!
-    digitalWrite(13, LOW);
-    delay(50);
-  }
-  digitalWrite(12, LOW);
-  digitalWrite(13, LOW);
-  delay(5000);
+  go_down();
+  delay(1000);
 }

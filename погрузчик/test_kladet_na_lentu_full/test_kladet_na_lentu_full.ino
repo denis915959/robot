@@ -29,14 +29,14 @@ pinMode(44, OUTPUT);//лента
 pinMode(45, OUTPUT);//лента
 pinMode(12, OUTPUT);//мотор разворот платформы ШИМ
 pinMode(13, OUTPUT);//лента ШИМ
-pinMode(35, OUTPUT);//драйвер платформы
-pinMode(36, OUTPUT);//драйвер платформы
+pinMode(12, OUTPUT);//драйвер платформы
+pinMode(13, OUTPUT);//драйвер платформы
 pinMode(A8, INPUT);//потенциометр
-pinMode(5, INPUT);//концевик лента
+pinMode(36, INPUT);//концевик лента
 Serial.begin(9600);
 
 }
-void povorot_platformy()
+/*void povorot_platformy()
 {
   go_up();
   delay(200);
@@ -102,8 +102,8 @@ void vozvrat_platformy()
   digitalWrite(43, LOW);
   digitalWrite(42, LOW);
   delay(5000);
-}
-void lenta_beret()//возможно, сделать 2 функции (на первый и второй ящики), или просто переменная flag
+}*/
+/*void lenta_beret()//возможно, сделать 2 функции (на первый и второй ящики), или просто переменная flag
 {
   go_down_to_lenta();
   distance = ultrasonic.read();//47 - echo (белый провод)
@@ -131,19 +131,36 @@ void go_up()
   }
   digitalWrite(35, LOW);
   digitalWrite(36, LOW);
-}
+}*/
 void go_down_to_lenta()
 {
-  while (digitalRead(5)==0)
+  while (digitalRead(36)==0)
   {
-    digitalWrite(35, HIGH);
-    digitalWrite(36, LOW);
+    digitalWrite(12, HIGH);
+    digitalWrite(13, LOW);
     delay(50);
   }
-  digitalWrite(35, LOW);
-  digitalWrite(36, LOW);
+  digitalWrite(12, LOW);
+  digitalWrite(13, LOW);
 }
-void pogruzchik_kladet_box_na_lentu()//погрузчик кладет ящик на ленту
+
+void lenta_beret()//доработал, осталось проверить
+{
+  go_down_to_lenta();
+  distance = ultrasonic.read();//47 - echo (белый провод)
+  while (distance>4)
+  {
+     
+     digitalWrite(4, HIGH);//ящик отъезжает
+     digitalWrite(5, LOW);
+     delay(100);//вместо это цикл while по датчику расстояния
+     distance = ultrasonic.read(); 
+  }
+  digitalWrite(4, LOW);//ящик отъезжает
+  digitalWrite(5, LOW);
+}
+
+/*void pogruzchik_kladet_box_na_lentu()//погрузчик кладет ящик на ленту
 {
   go_up();
   //delay(200);
@@ -153,16 +170,31 @@ void pogruzchik_kladet_box_na_lentu()//погрузчик кладет ящик 
   lenta_beret();
   vozvrat_platformy();
   delay(2000);//уменьшить до 500
+}*/
+
+void go_up()//ВЕРНО
+{
+   while (digitalRead(33)!=0)//подъем вверх
+  {
+     digitalWrite(13, HIGH);
+     digitalWrite(12, LOW);
+     ////Serial.println(1);
+     delay(50);
+  }
+  digitalWrite(13, LOW);
+  digitalWrite(12, LOW);
 }
+
 void loop() {//если сверху - разворот. если снизу - ничего не трогаем
   // put your main code here, to run repeatedly:
   //pogruzchik_kladet_box_na_lentu();
-  //go_up();
+go_up();
 //povorot_platformy();
-pogruzchik_kladet_box_na_lentu();
-//lenta_beret();
+//pogruzchik_kladet_box_na_lentu();
+go_down_to_lenta();
+lenta_beret();
 //vozvrat_platformy();
 //delay(2000);
 //Serial.println(analogRead(A8));
-//delay(300);
+delay(3000);
 }
