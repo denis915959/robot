@@ -1,0 +1,105 @@
+# 2 регистра
+"""Подключите вывод DS первого регистра к GPIO на Raspberry Pi или Arduino (например, GPIO2).
+Подключите вывод SH_CP первого регистра к другому GPIO (например, GPIO3).
+Подключите вывод ST_CP первого регистра к еще одному GPIO (например, GPIO4).
+Соединение второго регистра:
+Подключите Q7' первого регистра к DS второго регистра.
+SH_CP и ST_CP второго регистра подключите к тем же GPIO, что и у первого.
+Подключение светодиодов:
+Подключите аноды светодиодов к выходам Q0-Q7 первого регистра и Q0-Q7 второго регистра.
+Катоды светодиодов подключите через резисторы к GND."""
+
+import RPi.GPIO as GPIO
+import time
+
+# Установка режима нумерации пинов
+GPIO.setmode(GPIO.BCM) # нумерация по GPIO
+
+# Определение пинов
+data_pin = 2    # DS
+clock_pin = 3   # SH_CP
+latch_pin = 4   # ST_CP
+
+# Настройка пинов как выходы
+GPIO.setup(data_pin, GPIO.OUT)
+GPIO.setup(clock_pin, GPIO.OUT)
+GPIO.setup(latch_pin, GPIO.OUT)
+
+def shift_out(data):
+    # Установка уровня "низкий" на ST_CP
+    GPIO.output(latch_pin, GPIO.LOW)
+
+    for bit in range(16):
+        # Отправка каждого бита по очереди
+        GPIO.output(data_pin, (data >> bit) & 1)
+        GPIO.output(clock_pin, GPIO.HIGH)  # Генерация тактового импульса
+        GPIO.output(clock_pin, GPIO.LOW)
+        time.sleep(0.5)
+
+    # Установка уровня "высокий" на ST_CP для обновления выходов
+    GPIO.output(latch_pin, GPIO.HIGH)
+
+try:
+    while True:
+        # Включение всех светодиодов
+        shift_out(0xFFFF)  # Включаем все светодиоды
+        time.sleep(1)
+        # Выключение всех светодиодов
+        shift_out(0x0000)  # Выключаем все светодиоды
+        time.sleep(1)
+
+except KeyboardInterrupt:
+    pass
+
+finally:
+    GPIO.cleanup()
+
+
+
+
+
+# 3 грегистра
+"""DS первого регистра к GPIO на Raspberry Pi (например, GPIO17).
+SH_CP всех трех регистров к одному GPIO (например, GPIO27).
+ST_CP всех трех регистров к одному GPIO (например, GPIO22).
+Соединение регистров:
+Q7' первого регистра к DS второго регистра.
+Q7' второго регистра к DS третьего регистра.
+Дополнительные подключения:
+Подключите OE каждого регистра к GND.
+Подключите MR каждого регистра к 5V."""
+
+import RPi.GPIO as GPIO
+import time
+
+GPIO.setmode(GPIO.BCM) # нумерация по GPIO
+
+data_pin = 17
+clock_pin = 27
+latch_pin = 22
+
+GPIO.setup(data_pin, GPIO.OUT)
+GPIO.setup(clock_pin, GPIO.OUT)
+GPIO.setup(latch_pin, GPIO.OUT)
+
+def shift_out(data):
+    GPIO.output(latch_pin, GPIO.LOW)
+    
+    for i in range(24):  # 24 бита для трех регистров
+        GPIO.output(data_pin, (data >> i) & 1)
+        GPIO.output(clock_pin, GPIO.HIGH)
+        GPIO.output(clock_pin, GPIO.LOW)
+    
+    GPIO.output(latch_pin, GPIO.HIGH)
+
+try:
+    while True:
+        # Включение всех светодиодов
+        shift_out(0xFFFFFF)
+        time.sleep(1)
+        # Выключение всех светодиодов
+        shift_out(0x000000)
+        time.sleep(1)
+
+except KeyboardInterrupt:
+    GPIO.cleanup()

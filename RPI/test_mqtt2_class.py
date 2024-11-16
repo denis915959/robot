@@ -10,6 +10,9 @@ import random # генерируем id для клиента
 from paho.mqtt import client as mqtt_client
 from operator import length_hint
 import L298D
+import Obiezd_class
+import hcsr04
+import servo
 
 class robot_path_node:
 	def __init__(self, action1, counter1):
@@ -56,6 +59,7 @@ def mode_1(robot_action):
 		writenumber_i2c(robot_action[i].action)
 		writenumber_i2c(robot_action[i].counter)
 		print(robot_action[i].action, "  ", robot_action[i].counter)
+		time.sleep(1)
 
 	status=25  #по умолчанию
 	j_recv=-1
@@ -98,18 +102,29 @@ def mode_1(robot_action):
 			break
 		time.sleep(0.1)
 	return(result)
+        
+        
+def mode_2(motor, obiezd):
+        res = obiezd.obiezd()
+        return(res)
 
-def robot_trip(robot_action):
+
+def robot_trip(robot_action, motor, obiezd):
     result = [] # результат работы robot_trip
     # vernut v rabotu this block
-    """result = mode_1(robot_action)  
+    result = mode_1(robot_action)  
     if(result[0]==0):
             print("barrier!")
-            #вызов result[0]=mode_2()
-    if(result[0]==1):
+            
+            res_mode2 = mode_2(motor, obiezd)
+            if(res_mode2 == True):
+                    result[0]=1
+            else:
+                    result[0]=0
+    elif(result[0]==1):
             print("success!")
-    return(result)"""
-    result.append(0)
+    result.append(-1)
+    result.append(-1)
     return(result)
         
 
@@ -126,6 +141,9 @@ class MQTT_RPi:
         self.connect_counter=0
         self.tcrt5000 = 18
         self.m = L298D.Motor()
+        self.obiezd = Obiezd_class.Obiezd(self.m)
+        self.lidar = hcsr04.HCSR04()
+        self.servo = servo.Servo()
 
     def connect_mqtt(self) -> mqtt_client:
         def on_connect(client, userdata, flags, rc):
@@ -215,29 +233,51 @@ class MQTT_RPi:
         for i in range(0, len(self.robot_action)):
             print(self.robot_action[i].action, "  ", self.robot_action[i].counter)
         result_trip = []
+        self.servo.left_to_start_position()
+        self.servo.right_to_start_position()
+        time.sleep(0.5)
         if(mode1_flag):
-            result_trip = robot_trip(self.robot_action) 
+            """self.m.activate_arduino_driver() # vernut!!!
+            result_trip = robot_trip(self.robot_action, self.m, self.obiezd) 
             print("robot is work!")
-        
+            self.m.activate_rpi_driver()"""
+            time.sleep(5)
+            while(1):
+                distance = self.lidar.distance_right()
+                if(distance<=10):
+                    break
+                self.m.go_front(130, 0.05, non_stop = True)
+            self.m.stop()
+            res = mode_2(self.m, self.obiezd)
+            time.sleep(3)
+            self.m.go_front(130, 5, non_stop = True)
+            self.m.stop()
         """#вместо этого блока должна быть функция robot_trip
         print(" ") #robot go!
         time.sleep(2)
         print("robot is work!")"""
     
-# после старта робота он не посылает сообщение о препятствии, пока его не обьедет
         #вместо этого блока должна быть функция robot_trip !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # n2 - количество усчпешно взятых товаров на момент отправки сообщения, n3==1 - препятствие слева, n4==1 - препятствие справа!!
         #result_trip=[1, -1, -1, -1, -1]   #номер элементов в path! 
         #result_trip=[0, 2, 3, -1, -1, 3, 4] # if 6
 
         #result_trip=[0, 2, 3, -1, -1]
-        result_trip=[0, 0, 1, -1, -1]
+        result_trip=[0, 0, 1, -1, -1] # this bylo
+        #result_trip = robot_trip(self.robot_action, self.m)
+        print("result_trip = ", result_trip)
 
         #result_trip=[0, -1, 0, 1, 0]
         #result_trip=[1, 0, 1, -1, -1, 1, 2]
         # результат поездки робота
         #пробел в конце обязателен, иначе распарсер на складе не будет работать!
-        mode = -2
+        
+        
+        
+        
+        
+        
+        """mode = -2
         type_barrier = -1 # 1 - препятствие между двумя перекрестками, 2 - препятствие между ячейками
         if((result_trip[0]==0)and(result_trip[1]!=-1)):
             mode = 2
@@ -270,16 +310,27 @@ class MQTT_RPi:
                     writenumber_i2c(mode)
                     time.sleep(1)
                     writenumber_i2c(result_obiezd[1]) # 1 - команда на захват линии с поворотом влево
-                    """while(True):
+                    while(True):
                         recv_message=readnumber() # otvet poluchit
                         print("recv_message = ", recv_message)
                         if(recv_message==120):
-                            break"""
+                            break
                     time.sleep(10) # inache poka ne rabotaet
                     self.m.activate_rpi_driver()
                     print("after receive")
                 result_trip[0]=1
             else:
+                result_trip[0]=0"""
+        print("k8")
+        if(result_trip[0]==1):
+            time.sleep(2)
+            print("k9")
+            self.m.activate_arduino_driver()
+            result_trip2 = robot_trip(self.robot_action, self.m, self.obiezd) # zdes nado otkorrectirovat self.robot_action (umenshit), no now net vremeni
+            print("robot is work 2")
+            self.m.activate_rpi_driver()
+            if(result_trip2[0]==0):
+                print("result_trip2!!!!!!!!!!!!!!")
                 result_trip[0]=0
         
         answer=""

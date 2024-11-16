@@ -103,7 +103,7 @@ class Motor:
                 if(non_stop==False):
                         self.stop()
         
-    def go_pered(self, speed, delay=-1, non_stop=False): # движение вперед
+    def go_front(self, speed, delay=-1, non_stop=False): # движение вперед
         self.activate_rpi_driver()
         speed = int(speed/2.55)
         GPIO.output(self.pin9, GPIO.HIGH)
@@ -242,7 +242,7 @@ class Motor:
 """m = Motor()
 lm393 = LM393.LM393()
 distance = 16
-m.go_front_to_distance(distance, lm393)
+m.go_back_to_distance(distance, lm393)
 m.close()"""
 
 

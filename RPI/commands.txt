@@ -20,3 +20,7 @@ sudo pip3 install adafruit-circuitpython-pca9685
 
 # установка paho-mqtt
 pip3 install paho-mqtt
+
+
+# установка библиотеки для лидаров ?
+sudo apt-get install python3-spidev

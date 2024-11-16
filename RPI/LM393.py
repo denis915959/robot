@@ -4,7 +4,7 @@ GPIO.setmode(GPIO.BCM)
 
 class LM393: 
     def __init__(self):
-        self.delay_speed=1 # время между прерываниями в миллисекундах
+        self.delay_speed=1 # время между прерываниями
         self.k_right=0.49 # 0.48 коэффициэнт, необходимый для точного определения скорости (так как при всех верных вводных данных показания от истины почему-то отличаются на этот коэффициэнт)
         self.k_left=0.51 # 0.5
         self.delay_between_read_speed=0.125 #0.125 # интервал между измерениями скорости, для измерения дистанции работает с погрешностью 2% в интервале 5.5 см/сек до 14 см/сек
@@ -74,6 +74,7 @@ class LM393:
         speed1 = (tmp_speed_count1 * (7 /(44*40))*self.k_right *207)/time_interval1 # независимо рассчитываем 2 скорости
         speed2 = (tmp_speed_count2 * (7 /(44*40))*self.k_right *207)/time_interval2
         speed = (speed1+speed2)/2
+        #print("speed right = ", speed1)
         return(speed)
     
     def get_speed_left(self): # среднее по 2 левым датчикам, mm/sec
@@ -126,13 +127,12 @@ class LM393:
         
         time.sleep(delay_between_read_speed) # 0.5 - нормальная задержка
         S_l = S_l+speed_l*delay_between_read_speed
-        print("S_l = ", S_l)
+        #print("S_l = ", S_l)
         S_r = S_r+speed_r*delay_between_read_speed
-        print("S_r = ", S_r)
+        #print("S_r = ", S_r)
 
 except KeyboardInterrupt:
     GPIO.cleanup()"""
-    
 
 
 

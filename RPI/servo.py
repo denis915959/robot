@@ -6,7 +6,7 @@ class Servo:
         self.coefficient_angle = 130/90 # коэффициэнт перевода угла, введенного пользователем, в реальный угол поворота
         self.kit = ServoKit(channels=16) # активируем плату PCA9685
         self.kit.frequency = 50  #устаеавливаем частоту ШИМ 50 Hz
-        self.left_start=34 # левая стартовая позиция (датчик смотрит прямо по курсу робота)
+        self.left_start=31 #34 левая стартовая позиция (датчик смотрит прямо по курсу робота)
         self.right_start=110 # правая стартовая позиция (датчик смотрит прямо по курсу робота)
         self.back_right_start=15
         self.back_left_start = 102
@@ -20,7 +20,7 @@ class Servo:
             angle=180
         if(angle<0):
             angle=0
-        self.kit.servo[14].angle = angle # номер пина для левого серво в pca9685
+        self.kit.servo[14].angle = angle #14 # номер пина для левого серво в pca9685
         return(True)
             
     def rotate_front_right(self,angle): # поворот вправо на угол (относительно 0)
@@ -93,13 +93,23 @@ class Servo:
     
 
 
-"""servo = Servo()
 
-servo.front_right_vbok()
-time.sleep(0.1)
-#servo.back_left_to_start_position()
-#time.sleep(1)
-#servo.rotate_back_left(120)
+
+
+
+
+
+
+
+"""
+servo = Servo()
+
+servo.front_left_vbok()
+
+time.sleep(1)
+servo.back_left_to_start_position()
+time.sleep(1) 
+#servo.rotate_front_right(65)  # left = 80, right = 65
 #time.sleep(2)
 servo.close()"""
 

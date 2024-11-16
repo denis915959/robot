@@ -109,12 +109,12 @@ class hmc5883l:
 			'y': self.read_word_2c(self.HMC5883L_OUTY_MBS),
 			'z': self.read_word_2c(self.HMC5883L_OUTZ_MBS)
 		}
-		print(data)
 		return data
 
 	def get_calibrated(self):
 		data = self.get_raw()
 		uncalibrated_values = [data['x'] - self.bias[0], data['y'] - self.bias[1], data['z'] - self.bias[2]]
+		#print("uncalibrated_values = ", self.heading(uncalibrated_values[0], uncalibrated_values[1]))  ########
 		calibrated_values = [0,0,0]
 		for i in range(0,3):
 			for j in range(0,3):

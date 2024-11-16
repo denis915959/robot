@@ -14,4 +14,4 @@ GPIO.setwarnings(False)
 lm393 = LM393.LM393()
 
 m = L298D.Motor()
-m.go_back_to_line(200, lm393)
+m.go_front_to_line(lm393)

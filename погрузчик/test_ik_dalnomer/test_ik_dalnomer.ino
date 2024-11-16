@@ -11,7 +11,8 @@ void loop() {
 // получаем сглаженное значение и переводим в напряжение
   value = irRead(); //medium_read();
   Serial.println(value);
-  delay(200);
+  Serial.println();
+  delay(1000);
 }
 
 // Усреднение нескольких значений для сглаживания
@@ -22,11 +23,16 @@ float irRead() {
   int delay_const = 0; // 15
   float k = 1.1;
   // Получение 5 значений
+  int analog_sum = 0;
+  float volts_sum = 0;
   for (int i=0; i<cycl; i++)
   {
     value = analogRead(IRpin);
+    analog_sum+=value;
+
     // значение сенсора переводим в напряжение
     float volts = analogRead(IRpin)*0.0048828125;
+    volts_sum+=volts;
     // и в расстояние в см
     int distance=32*pow(volts,-1.10);
     averaging = averaging + distance;
@@ -34,6 +40,10 @@ float irRead() {
   }
   float result = -1.0;
   value = averaging / cycl; // усреднить значения
+  Serial.print("analog = ");
+  Serial.println(analog_sum/cycl);
+  Serial.print("volts = ");
+  Serial.println(volts_sum/cycl);
   if(value>80){
     value = -1;
   }
